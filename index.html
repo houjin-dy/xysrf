@@ -1,0 +1,2121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>键盘主题资源上传管理</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js">
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js">
+    </script>
+    <style>
+        /* ===== 全局样式 ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'PingFang SC', Roboto, 'Helvetica Neue', sans-serif;
+            background: #f4f6fa;
+            color: #1e293b;
+            padding: 24px;
+            padding-top: 200px;
+        }
+
+        .app {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        /* ===== 固定顶部栏 ===== */
+        .fixed-header {
+            position: fixed;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            max-width: 1100px;
+            width: 100%;
+            z-index: 1000;
+            background: #fff;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+            padding: 16px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            border-radius: 0 0 12px 12px;
+        }
+
+        .fixed-header .top-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .fixed-header .top-row h1 {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+
+        .fixed-header .top-row h1 small {
+            font-weight: 400;
+            font-size: 13px;
+            color: #64748b;
+            margin-left: 8px;
+        }
+
+        .fixed-header .top-row .header-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .fixed-header .top-row .header-actions button {
+            padding: 8px 18px;
+            border: none;
+            border-radius: 40px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .2s;
+            background: #eef2f6;
+            color: #1e293b;
+        }
+
+        .fixed-header .top-row .header-actions button.primary {
+            background: #2563eb;
+            color: #fff;
+        }
+
+        .fixed-header .top-row .header-actions button.primary:hover {
+            background: #1d4ed8;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+
+        .fixed-header .top-row .header-actions button:hover {
+            background: #e2e8f0;
+        }
+
+        .fixed-header .top-row .header-actions .tutorial-btn {
+            background: #8b5cf6;
+            color: #fff;
+        }
+
+        .fixed-header .top-row .header-actions .tutorial-btn:hover {
+            background: #7c3aed;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+        }
+
+        .fixed-header .stats-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 16px 24px;
+            font-size: 14px;
+            color: #475569;
+        }
+
+        .fixed-header .stats-row .stats {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .fixed-header .stats-row .stats span strong {
+            color: #1e293b;
+        }
+
+        /* 搜索框 */
+        .fixed-header .search-box {
+            flex: 1 1 240px;
+            min-width: 160px;
+            display: flex;
+            align-items: center;
+            background: #f1f5f9;
+            border-radius: 30px;
+            padding: 4px 14px;
+            transition: background 0.2s, box-shadow 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .fixed-header .search-box:focus-within {
+            background: #fff;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+        }
+
+        .fixed-header .search-box .search-icon {
+            color: #94a3b8;
+            font-size: 16px;
+            margin-right: 6px;
+            pointer-events: none;
+        }
+
+        .fixed-header .search-box input {
+            border: none;
+            background: transparent;
+            padding: 6px 0;
+            font-size: 14px;
+            width: 100%;
+            outline: none;
+            color: #1e293b;
+        }
+
+        .fixed-header .search-box input::placeholder {
+            color: #94a3b8;
+        }
+
+        .fixed-header .search-box .clear-btn {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 0 4px;
+            display: none;
+        }
+
+        .fixed-header .search-box .clear-btn.visible {
+            display: block;
+        }
+
+        .fixed-header .search-box .clear-btn:hover {
+            color: #475569;
+        }
+
+        .fixed-header .tabs-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            padding-top: 4px;
+            border-top: 1px solid #f1f5f9;
+            margin-top: 4px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+
+        .fixed-header .tabs-container button {
+            padding: 6px 14px;
+            border: none;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            background: transparent;
+            color: #64748b;
+            white-space: nowrap;
+            transition: all .2s;
+        }
+
+        .fixed-header .tabs-container button.active {
+            background: #2563eb;
+            color: #fff;
+        }
+
+        .fixed-header .tabs-container button:hover:not(.active) {
+            background: #eef2f6;
+        }
+
+        /* ===== 内容区 ===== */
+        .category-section {
+            display: none;
+            animation: fadeIn .25s ease;
+        }
+
+        .category-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .resource-list {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .resource-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 16px 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            border: 1px solid #edf2f7;
+            transition: all .2s;
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .resource-card:hover {
+            border-color: #cbd5e1;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+        }
+
+        .resource-card .preview {
+            flex: 0 0 80px;
+            height: 80px;
+            background: #f1f5f9;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #94a3b8;
+            font-size: 12px;
+            border: 1px dashed #cbd5e1;
+            overflow: hidden;
+        }
+
+        .resource-card .preview img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .resource-card .info {
+            flex: 1 1 300px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .resource-card .info .meta {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .resource-card .info .meta .name {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .resource-card .info .meta .badge {
+            font-size: 11px;
+            background: #eef2f6;
+            padding: 2px 10px;
+            border-radius: 20px;
+            color: #475569;
+            font-weight: 500;
+        }
+
+        .resource-card .info .details {
+            font-size: 12px;
+            color: #64748b;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 16px;
+        }
+
+        .resource-card .info .details .loc {
+            background: #f1f5f9;
+            padding: 1px 8px;
+            border-radius: 12px;
+            font-family: 'SF Mono', 'Consolas', monospace;
+            font-size: 11px;
+            color: #334155;
+        }
+
+        .resource-card .info .size-hint {
+            font-size: 12px;
+            color: #475569;
+            background: #f8fafc;
+            padding: 2px 12px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            display: inline-block;
+        }
+
+        .resource-card .info .file-name-display {
+            font-size: 11px;
+            font-family: 'SF Mono', 'Consolas', monospace;
+            color: #475569;
+            background: #f8fafc;
+            padding: 2px 10px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 200px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .resource-card .info .file-name-display:hover {
+            background: #e2e8f0;
+        }
+
+        .resource-card .info .image-dimension {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 2px;
+            min-height: 20px;
+        }
+
+        .resource-card .actions {
+            flex: 0 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            align-items: flex-end;
+            min-width: 200px;
+        }
+
+        .resource-card .actions .upload-area {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            flex-wrap: wrap;
+            border-top: 1px solid #f1f5f9;
+            padding: 6px 8px;
+            border-radius: 6px;
+            transition: background 0.15s, border-color 0.15s;
+            cursor: pointer;
+            border: 2px dashed transparent;
+        }
+
+        .resource-card .actions .upload-area:first-child {
+            border-top: none;
+            padding-top: 0;
+        }
+
+        .resource-card .actions .upload-area.drag-over {
+            background: #eff6ff;
+            border-color: #3b82f6;
+        }
+
+        .resource-card .actions .upload-area .label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #475569;
+            min-width: 60px;
+            pointer-events: none;
+        }
+
+        .resource-card .actions .upload-area input[type="file"] {
+            display: none;
+        }
+
+        .resource-card .actions .upload-area .status {
+            font-size: 12px;
+            font-weight: 500;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+
+        .resource-card .actions .upload-area .status.empty {
+            color: #94a3b8;
+        }
+
+        .resource-card .actions .upload-area .status.success {
+            color: #22c55e;
+        }
+
+        .resource-card .actions .upload-area .cancel-btn {
+            font-size: 12px;
+            color: #ef4444;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 4px;
+            transition: background 0.2s;
+            display: none;
+            pointer-events: auto;
+        }
+
+        .resource-card .actions .upload-area .cancel-btn:hover {
+            background: #fee2e2;
+        }
+
+        .resource-card .actions .upload-area .cancel-btn.visible {
+            display: inline-block;
+        }
+
+        .resource-card .actions .color-control {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            width: 100%;
+            border-top: 1px solid #f1f5f9;
+            padding-top: 6px;
+        }
+
+        .resource-card .actions .color-control:first-child {
+            border-top: none;
+            padding-top: 0;
+        }
+
+        .resource-card .actions .color-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            flex-wrap: wrap;
+        }
+
+        .resource-card .actions .color-row .label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #475569;
+            min-width: 50px;
+        }
+
+        .resource-card .actions .color-row input[type="color"] {
+            width: 32px;
+            height: 32px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 2px;
+            cursor: pointer;
+            background: #fff;
+            flex-shrink: 0;
+        }
+
+        .resource-card .actions .color-row input[type="text"] {
+            flex: 1;
+            padding: 4px 8px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 13px;
+            font-family: 'SF Mono', 'Consolas', monospace;
+            background: #fff;
+            transition: border .2s;
+            min-width: 100px;
+        }
+
+        .resource-card .actions .color-row input[type="text"]:focus {
+            outline: none;
+            border-color: #2563eb;
+        }
+
+        .resource-card .actions .color-row .color-swatch {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+            flex-shrink: 0;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-title .count {
+            font-size: 14px;
+            font-weight: 400;
+            color: #64748b;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            color: #fff;
+            padding: 12px 28px;
+            border-radius: 40px;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+            z-index: 9999;
+            opacity: 0;
+            transition: opacity .3s ease;
+            pointer-events: none;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+
+        .toast.success {
+            background: #16a34a;
+        }
+
+        .toast.error {
+            background: #dc2626;
+        }
+
+        .toast.info {
+            background: #2563eb;
+        }
+
+        /* ===== 新手教程弹窗 ===== */
+        .tutorial-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 99999;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn .25s ease;
+            padding: 24px;
+        }
+
+        .tutorial-overlay.open {
+            display: flex;
+        }
+
+        .tutorial-modal {
+            background: #fff;
+            border-radius: 16px;
+            max-width: 700px;
+            width: 100%;
+            max-height: 85vh;
+            overflow-y: auto;
+            padding: 32px 36px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            position: relative;
+            animation: slideUp .3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(30px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .tutorial-modal .close-btn {
+            position: absolute;
+            top: 16px;
+            right: 20px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #94a3b8;
+            cursor: pointer;
+            transition: color 0.2s;
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+
+        .tutorial-modal .close-btn:hover {
+            color: #1e293b;
+            background: #f1f5f9;
+        }
+
+        .tutorial-modal h2 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tutorial-modal .subtitle {
+            color: #64748b;
+            font-size: 14px;
+            margin-bottom: 24px;
+            border-bottom: 1px solid #f1f5f9;
+            padding-bottom: 16px;
+        }
+
+        .tutorial-step {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 20px;
+            padding: 16px 18px;
+            border-radius: 12px;
+            background: #f8fafc;
+            transition: background 0.2s;
+        }
+
+        .tutorial-step:hover {
+            background: #f1f5f9;
+        }
+
+        .tutorial-step .step-num {
+            flex: 0 0 36px;
+            height: 36px;
+            background: #2563eb;
+            color: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 15px;
+        }
+
+        .tutorial-step .step-content {
+            flex: 1;
+        }
+
+        .tutorial-step .step-content h3 {
+            font-size: 15px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 4px;
+        }
+
+        .tutorial-step .step-content p {
+            font-size: 13px;
+            color: #475569;
+            line-height: 1.6;
+        }
+
+        .tutorial-step .step-content .highlight {
+            display: inline-block;
+            background: #eef2ff;
+            color: #2563eb;
+            padding: 1px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .tutorial-footer {
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid #f1f5f9;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .tutorial-footer button {
+            padding: 8px 24px;
+            border: none;
+            border-radius: 40px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .2s;
+        }
+
+        .tutorial-footer .btn-primary {
+            background: #2563eb;
+            color: #fff;
+        }
+
+        .tutorial-footer .btn-primary:hover {
+            background: #1d4ed8;
+        }
+
+        .tutorial-footer .btn-secondary {
+            background: #eef2f6;
+            color: #1e293b;
+        }
+
+        .tutorial-footer .btn-secondary:hover {
+            background: #e2e8f0;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 12px;
+                padding-top: 220px;
+            }
+
+            .fixed-header {
+                padding: 12px 16px;
+            }
+
+            .fixed-header .top-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .fixed-header .top-row .header-actions {
+                justify-content: stretch;
+            }
+
+            .fixed-header .top-row .header-actions button {
+                flex: 1;
+                text-align: center;
+                padding: 8px 12px;
+                font-size: 13px;
+            }
+
+            .fixed-header .stats-row {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+            }
+
+            .fixed-header .search-box {
+                width: 100%;
+            }
+
+            .resource-card {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .resource-card .preview {
+                flex: 0 0 60px;
+                height: 60px;
+            }
+
+            .resource-card .actions {
+                align-items: stretch;
+            }
+
+            .resource-card .actions .upload-area {
+                flex-wrap: wrap;
+                padding: 4px 6px;
+            }
+
+            .resource-card .actions .color-row {
+                flex-wrap: wrap;
+            }
+
+            .tutorial-modal {
+                padding: 24px 20px;
+                max-height: 90vh;
+            }
+
+            .tutorial-step {
+                flex-direction: column;
+                gap: 10px;
+                padding: 14px 16px;
+            }
+
+            .tutorial-step .step-num {
+                flex: 0 0 auto;
+                width: 32px;
+                height: 32px;
+                font-size: 13px;
+            }
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 8px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 8px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .resource-card.hidden-by-search {
+            display: none !important;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app">
+        <!-- ===== 固定顶部栏 ===== -->
+        <div class="fixed-header" id="fixedHeader">
+            <div class="top-row">
+                <h1>🎨 键盘主题资源上传 <small>v1.3 规范</small></h1>
+                <div class="header-actions">
+                    <button onclick="exportAll()" class="primary">📦 导出 ZIP</button>
+                    <button onclick="clearAll()">🗑️ 清空全部</button>
+                    <button onclick="openTutorial()" class="tutorial-btn">❓ 新手教程</button>
+                </div>
+            </div>
+            <div class="stats-row">
+                <div class="stats">
+                    <span>📁 资源总计: <strong id="totalCount">0</strong></span>
+                    <span>✅ 已上传: <strong id="uploadedCount">0</strong></span>
+                    <span>🎯 色值: <strong id="colorCount">0</strong></span>
+                </div>
+                <div class="search-box" id="searchBox">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="searchInput" placeholder="搜索资源名称、文件名、路径..." />
+                    <button class="clear-btn" id="clearSearchBtn" title="清除搜索">✕</button>
+                </div>
+            </div>
+            <div class="tabs-container" id="tabContainer"></div>
+        </div>
+
+        <!-- ===== 新手教程弹窗 ===== -->
+        <div class="tutorial-overlay" id="tutorialOverlay" onclick="if(event.target===this) closeTutorial()">
+            <div class="tutorial-modal">
+                <button class="close-btn" onclick="closeTutorial()">✕</button>
+                <h2>📖 新手教程</h2>
+                <div class="subtitle">快速上手 — 5 步完成主题资源收集与导出</div>
+
+                <div class="tutorial-step">
+                    <div class="step-num">1</div>
+                    <div class="step-content">
+                        <h3>📂 切换资源分类</h3>
+                        <p>点击顶部 <span class="highlight">Tab
+                                标签</span>（如“键盘区域-按键”、“键盘背景”等），切换查看不同类别的资源条目。每个分类下的资源会按卡片形式展示，方便集中处理。</p>
+                    </div>
+                </div>
+
+                <div class="tutorial-step">
+                    <div class="step-num">2</div>
+                    <div class="step-content">
+                        <h3>📤 上传图片文件</h3>
+                        <p>每个资源卡片右侧有 <span class="highlight">上传区域</span>。点击区域或拖拽文件到区域内即可上传。如果资源同时需要浅色和深色两套图片，卡片会显示“☀️
+                            浅色”和“🌙 深色”两个独立上传区，分别上传对应的图片即可。</p>
+                    </div>
+                </div>
+
+                <div class="tutorial-step">
+                    <div class="step-num">3</div>
+                    <div class="step-content">
+                        <h3>🎨 设置色值</h3>
+                        <p>对于色值类型的资源（如“按键文字颜色”），卡片上会显示 <span class="highlight">色值输入区</span>。您可以直接输入 <code>#RRGGBB</code>
+                            格式的 HEX 色值，也可以点击取色盘直观选取。浅色和深色模式分别独立设置。</p>
+                    </div>
+                </div>
+
+                <div class="tutorial-step">
+                    <div class="step-num">4</div>
+                    <div class="step-content">
+                        <h3>🔍 搜索快速定位</h3>
+                        <p>在顶部 <span class="highlight">搜索框</span>
+                            中输入关键词（如资源名称、文件名、存放路径），当前分类下的卡片会自动过滤，仅显示匹配的结果，帮您快速找到目标资源。</p>
+                    </div>
+                </div>
+
+                <div class="tutorial-step">
+                    <div class="step-num">5</div>
+                    <div class="step-content">
+                        <h3>📦 一键导出打包</h3>
+                        <p>完成所有资源的上传和色值设置后，点击顶部 <span class="highlight">“📦 导出 ZIP”</span> 按钮。系统会自动将图片按
+                            <code>drawable-xhdpi</code>、<code>drawable-night-xhdpi</code> 等目录分类打包，同时生成
+                            <code>values/colors.xml</code> 和 <code>values-night/colors.xml</code>，一键下载完整资源包。
+                        </p>
+                    </div>
+                </div>
+
+                <div class="tutorial-footer">
+                    <button class="btn-secondary" onclick="closeTutorial()">关闭</button>
+                    <button class="btn-primary" onclick="closeTutorial()">开始使用 🚀</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== 内容区 ===== -->
+        <div id="sectionsContainer"></div>
+        <div class="toast" id="toast"></div>
+    </div>
+
+    <script>
+        // ============================================================
+        // 新手教程开关
+        // ============================================================
+        function openTutorial() {
+            document.getElementById('tutorialOverlay').classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeTutorial() {
+            document.getElementById('tutorialOverlay').classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
+        // 点击弹窗外部关闭（已在 HTML 中处理）
+
+        // ============================================================
+        // 1. 资源定义 (完整保留)
+        // ============================================================
+        const RESOURCES = [];
+
+        function addRes(category, name, fileName, format, locations, size, note, required = true, isColor = false) {
+            RESOURCES.push({
+                category,
+                name,
+                fileName,
+                format,
+                locations: Array.isArray(locations) ? locations : [locations],
+                size: size || '',
+                note: note || '',
+                required,
+                isColor,
+                fileLight: null,
+                uploadedLight: false,
+                dimsLight: null,
+                fileNight: null,
+                uploadedNight: false,
+                dimsNight: null,
+                colorLight: '',
+                colorNight: '',
+            });
+        }
+
+        function addColor(category, name, fileName, note) {
+            addRes(category, name, fileName, '色值', 'values', '', note, true, true);
+        }
+
+        const CAT = {
+            KEYBOARD: '键盘区域-按键',
+            BG: '键盘背景',
+            FUNC_BAR: '功能栏',
+            SHIFT: 'Shift按键',
+            DELETE: '删除按键',
+            RETURN: '回车按键',
+            EMOJI: 'Emoji相关',
+            LANG: '中/英切换',
+            JP: '日语键盘',
+            KEY_COLOR: '按键文字颜色',
+            T9: '9键键盘',
+            BUBBLE_LONG: '长按气泡',
+            BUBBLE_SHORT: '短按气泡',
+            CANDIDATE: '候选词栏',
+            FLOAT: '悬浮键盘',
+            PINYIN: '拼音View',
+            EMOJI_PAGE: 'Emoji页面',
+            TYPING_POPUP: '打字弹窗',
+            MIYU: 'Emoji密语',
+            EDIT: '编辑页面',
+            CLIPBOARD: '剪贴板页面',
+            OTHER: '其它',
+            NEW2025: '2025年新增',
+            INCREMENTAL: '增量属性（非必选）',
+        };
+
+        // ---------- 键盘区域-按键 ----------
+        addRes(CAT.KEYBOARD, '正常按键背景-正常态', 'btn_keyboard_key_normal_normal.9.png', '.9.png',
+            ['drawable-xhdpi', 'drawable-night-xhdpi'], 'W30*H44dp', '手机竖屏26键');
+        addRes(CAT.KEYBOARD, '正常按键背景-点击态', 'btn_keyboard_key_normal_pressed.9.png', '.9.png',
+            ['drawable-xhdpi', 'drawable-night-xhdpi'], '', '');
+        addRes(CAT.KEYBOARD, '功能按键背景-正常态', 'btn_keyboard_key_functional_normal.9.png', '.9.png',
+            ['drawable-xhdpi', 'drawable-night-xhdpi'], 'W49*H44dp', '手机竖屏26键');
+        addRes(CAT.KEYBOARD, '功能按键背景-点击态', 'btn_keyboard_key_functional_pressed.9.png', '.9.png',
+            ['drawable-xhdpi', 'drawable-night-xhdpi'], '', '');
+        addRes(CAT.KEYBOARD, '空格按键语音icon', 'ic_space_icon_mic.svg', '.svg',
+            ['drawable', 'drawable-night'], 'W80*H20dp', '不用乘倍数，直接使用');
+        addRes(CAT.KEYBOARD, '空格按键背景-正常态', 'btn_keyboard_spacekey_normal_normal.9.png', '.9.png',
+            ['drawable-xhdpi', 'drawable-night-xhdpi'], 'W89*H44dp', '手机竖屏26键');
+        addRes(CAT.KEYBOARD, '空格按键背景-点击态', 'btn_keyboard_spacekey_normal_pressed.9.png', '.9.png',
+            ['drawable-xhdpi', 'drawable-night-xhdpi'], '', '');
+        addRes(CAT.KEYBOARD, '空格按键上的空格横线图标', 'ic_space_line.9.png', '.9.png',
+            ['drawable-xhdpi', 'drawable-night-xhdpi'], 'W80*H14dp', '不用乘倍数，直接使用');
+
+        // ---------- 键盘背景 ----------
+        addRes(CAT.BG, '键盘背景图', 'keyboard_background.png', '.png',
+            ['drawable-xxhdpi', 'drawable-night-xxhdpi'], 'W360dp * H277dp', '支持动态背景，需提供动画第一帧');
+        addRes(CAT.BG, '二级页面背景图(menu)', 'keyboard_background_secondary.png', '.png',
+            ['drawable-xxhdpi', 'drawable-night-xxhdpi'], 'W360dp * H277dp', 'menu页面、键盘布局页面等');
+
+        // ---------- 功能栏 ----------
+        addRes(CAT.FUNC_BAR, 'menu小艺icon', 'more_option_button.png', '.png',
+            ['drawable-xhdpi', 'drawable-night-xhdpi'], 'W24*H24dp', '');
+        addRes(CAT.FUNC_BAR, '功能栏背景图', 'keyboard_suggestion_background.9.png', '.9.png',
+            ['drawable-xhdpi', 'drawable-night-xhdpi'], 'W360*H43dp', '');
+
+        // ---------- Shift按键 ----------
+        addRes(CAT.SHIFT, 'shift按键-正常态', 'ic_shift.svg', '.svg',
+            ['drawable', 'drawable-night'], 'W24*H24dp', '');
+        addRes(CAT.SHIFT, 'shift按键-上档(大写)', 'ic_shift_locked.svg', '.svg',
+            ['drawable', 'drawable-night'], '', '');
+        addRes(CAT.SHIFT, 'shift按键-锁定(连续两次)', 'ic_shift_locked_locked.svg', '.svg',
+            ['drawable', 'drawable-night'], '', '需与ic_shift_locked.svg有明显区分');
+
+        // ---------- 删除按键 ----------
+        addRes(CAT.DELETE, '删除按键', 'ic_delete.svg', '.svg',
+            ['drawable', 'drawable-night'], 'W24*H24dp', '');
+
+        // ---------- 回车按键 ----------
+        addRes(CAT.RETURN, '回车按键', 'ic_return.svg', '.svg',
+            ['drawable', 'drawable-night'], 'W24*H24dp', '');
+        addRes(CAT.RETURN, '回车按键search icon', 'ic_search.png', '.png',
+            ['drawable-xhdpi', 'drawable-night-xhdpi'], 'W24*H24dp', '');
+
+        // ---------- Emoji相关 ----------
+        addRes(CAT.EMOJI, '按键emoji icon', 'ic_emoji.svg', '.svg',
+            ['drawable', 'drawable-night'], 'W24*H24dp', '仓颉、注音页面，同候选词栏样式一致');
+
+        // ---------- 中/英切换 ----------
+        addRes(CAT.LANG, '中/英切换icon(含地球)', 'ic_zh_en.svg', '.svg',
+            ['drawable', 'drawable-night'], 'W24*H24dp', '');
+        addRes(CAT.LANG, '英/中切换icon(含地球)', 'ic_en_zh.svg', '.svg',
+            ['drawable', 'drawable-night'], 'W24*H24dp', '');
+
+        // ---------- 日语键盘 ----------
+        addRes(CAT.JP, '日语键盘地球icon', 'icon_small_language.png', '.png',
+            ['drawable-xhdpi', 'drawable-night-xhdpi'], 'W10*H10dp', '和ic_zh_en.svg地球样式一致');
+
+        // ---------- 按键文字颜色 (色值) ----------
+        addColor(CAT.KEY_COLOR, '按键文字颜色-正常态', 'key_text_color_normal', '');
+        addColor(CAT.KEY_COLOR, '按键文字颜色-点击态', 'key_text_color_pressed', '');
+        addColor(CAT.KEY_COLOR, '功能按键文字颜色-正常态', 'key_text_color_functional_normal', '符号、123、清空、完成');
+        addColor(CAT.KEY_COLOR, '功能按键文字颜色-点击态', 'key_text_color_functional_pressed', '');
+        addColor(CAT.KEY_COLOR, '纯英文空格按键文字颜色', 'spacebar_text_color', '');
+        addColor(CAT.KEY_COLOR, '按键文字上方小字 keyHintLetterColor', 'key_hint_letter_color', '');
+
+        // ---------- 9键键盘 ----------
+        addRes(CAT.T9, '9键左侧选音区域按键背景-正常态', 'btn_keyboard_key_t9_normal.9.png', '.9.png',
+            ['drawable-xhdpi', 'drawable-night-xhdpi'], 'W59*H41dp', '');
+        addRes(CAT.T9, '9键左侧选音区域按键背景-点击态', 'btn_keyboard_key_t9_pressed.9.png', '.9.png',
+            ['drawable-xhdpi', 'drawable-night-xhdpi'], '', '');
+        addRes(CAT.T9, '9键左侧选音区域大背景', 'keyboard_t9_left_bg.9.png', '.9.png',
+            ['drawable-xhdpi', 'drawable-night-xhdpi'], 'W59*H164dp', '');
+
+        // ---------- 长按气泡 ----------
+        addRes(CAT.BUBBLE_LONG, '长按气泡-点击态背景', 'morekey_background_pressed.9.png', '.9.png',
+            ['drawable-xhdpi', 'drawable-night-xhdpi'], 'W42*H54dp', '');
+        addRes(CAT.BUBBLE_LONG, '长按气泡-正常态背景', 'morekey_background_normal.9.png', '.9.png',
+            ['drawable-xhdpi', 'drawable-night-xhdpi'], 'W42*H54dp', '');
+        addRes(CAT.BUBBLE_LONG, '长按气泡-大背景', 'morekey_popup_bg.9.png', '.9.png',
+            ['drawable-xhdpi', 'drawable-night-xhdpi'], 'W126*H54dp', '');
+        addColor(CAT.BUBBLE_LONG, '文字颜色-正常态', 'morekey_text_color_normal', '');
+        addColor(CAT.BUBBLE_LONG, '文字颜色-选中态', 'morekey_text_color_pressed', '');
+
+        // ---------- 短按气泡 ----------
+        addRes(CAT.BUBBLE_SHORT, '26键按键气泡背景', 'btn_key_preview_bg.9.png', '.9.png',
+            ['drawable-xhdpi', 'drawable-night-xhdpi'], 'W42*H54dp', '');
+        addRes(CAT.BUBBLE_SHORT, '9键按键气泡背景', 'btn_key_t9_preview_bg.9.png', '.9.png',
+            ['drawable-xhdpi', 'drawable-night-xhdpi'], 'W64*H83dp', '');
+        addColor(CAT.BUBBLE_SHORT, '按键气泡文字颜色', 'key_preview_text_color', '');
+
+        // ---------- 候选词栏 ----------
+        addColor(CAT.CANDIDATE, '联想词默认色值', 'suggested_word_color', '');
+        addColor(CAT.CANDIDATE, '联想词高亮色值', 'suggested_word_center_color', '');
+        addColor(CAT.CANDIDATE, '更多候选词右侧功能键背景色', 'more_suggested_word_function_bg_color', '');
+        addColor(CAT.CANDIDATE, '二级菜单高亮色', 'menu_item_selected_color', '');
+
+        // ---------- 悬浮键盘 ----------
+        addRes(CAT.FLOAT, '悬浮键盘背景图', 'keyboard_background_float.png', '.png',
+            ['drawable-xhdpi', 'drawable-night-xhdpi'], 'W310*H238dp', '左下、右下圆角');
+        addRes(CAT.FLOAT, '悬浮键盘头部区域背景', 'bg_float_keyboard_top.9.png', '.9.png',
+            ['drawable-xhdpi', 'drawable-night-xhdpi', 'drawable-xxhdpi', 'drawable-night-xxhdpi'], 'W310*H73dp',
+            '左下、右下直角，左上、右上圆角');
+        addRes(CAT.FLOAT, '悬浮键盘头部区域背景(全屏手写)', 'bg_float_keyboard_top_handwriting_full.9.png', '.9.png',
+            ['drawable-xhdpi', 'drawable-night-xhdpi', 'drawable-xxhdpi', 'drawable-night-xxhdpi'], 'W310*H73dp',
+            '左下、右下、左上直角，右上圆角');
+        addRes(CAT.FLOAT, '悬浮键盘menu页头部背景', 'bg_float_keyboard_middle.9.png', '.9.png',
+            ['drawable-xhdpi', 'drawable-night-xhdpi'], 'W310*H73dp', '与功能栏背景风格一致');
+        addColor(CAT.FLOAT, '悬浮键盘顶部 icon 背景', 'float_kbd_toolbar_item_bg', '');
+
+        // ---------- 拼音View ----------
+        addColor(CAT.PINYIN, '拼音view背景色', 'composing_background_color', '建议与composing_background.9.png一致');
+        addRes(CAT.PINYIN, '拼音编辑背景图(普通键盘)', 'composing_edit_background.9.png', '.9.png',
+            ['drawable-xhdpi', 'drawable-night-xhdpi'], 'W51*H51dp', '上方留白');
+        addRes(CAT.PINYIN, '拼音编辑背景图(悬浮键盘)', 'float_composing_edit_background.9.png', '.9.png',
+            ['drawable-xhdpi', 'drawable-night-xhdpi'], 'W51*H51dp', '上方留白，左右上角弧度');
+        addRes(CAT.PINYIN, '拼音view关闭icon', 'ic_edit_close.svg', '.svg',
+            ['drawable', 'drawable-night'], 'W24*H24dp', '');
+        addColor(CAT.PINYIN, '拼音View文字颜色', 'composing_text_color', '建议同联想词默认色值');
+        addColor(CAT.PINYIN, '拼音纠错标示色值', 'composing_correct_color', '建议与候选高亮色一致');
+        addRes(CAT.PINYIN, '拼音View背景图(普通键盘)', 'composing_background.9.png', '.9.png',
+            ['drawable-xhdpi', 'drawable-night-xhdpi', 'drawable-xxhdpi', 'drawable-night-xxhdpi'], 'W63*H32dp',
+            '背景右上有圆角');
+        addRes(CAT.PINYIN, '悬浮键盘手写模式view背景图', 'handwriting_mode_background.9.png', '.9.png',
+            ['drawable-xhdpi', 'drawable-night-xhdpi'], 'W25*H25dp', '');
+        addRes(CAT.PINYIN, '云词背景图(普通键盘)', 'cloud_word_background.9.png', '.9.png',
+            ['drawable-xhdpi', 'drawable-night-xhdpi', 'drawable-xxhdpi', 'drawable-night-xxhdpi'], 'W63*H32dp',
+            '背景左上有圆角');
+
+        // ---------- Emoji页面 ----------
+        addColor(CAT.EMOJI_PAGE, 'emoji一级页面 底部icon 非选中态色值', 'emoji_primary_tab_icon_color', '');
+        addColor(CAT.EMOJI_PAGE, 'emoji一级页面 底部icon 选中态色值', 'emoji_primary_tab_icon_selected_color', '');
+        addColor(CAT.EMOJI_PAGE, 'emoji二级页面 顶部icon 非选中态色值', 'emoji_secondary_tab_icon_color', '更多符号页顶部非选中态');
+        addColor(CAT.EMOJI_PAGE, 'emoji二级页面 顶部icon 选中态色值', 'emoji_secondary_tab_icon_selected_color', '更多符号页顶部选中态');
+        addRes(CAT.EMOJI_PAGE, 'emoji页底部tab背景图', 'emoji_bottom_background.9.png', '.9.png',
+            ['drawable-xhdpi', 'drawable-night-xhdpi'], 'W360*H50dp', '');
+        addColor(CAT.EMOJI_PAGE, 'emoji页面删除按键的灌色', 'emoji_delete_key_color', '');
+        addRes(CAT.EMOJI_PAGE, 'emoji删除按钮背景图', 'emoji_btn_del_bg.9.png', '.9.png',
+            ['drawable-xhdpi', 'drawable-night-xhdpi'], 'W54*H28dp', '');
+        addColor(CAT.EMOJI_PAGE, 'emoji页面所有未找到结果或者提示的文字颜色', 'empty_tips_text_color', '');
+        addColor(CAT.EMOJI_PAGE, '键盘区域上方emoji图标和下拉图标的颜色', 'build_item_icon_color', '');
+
+        // ---------- 打字弹窗 (6月新增) ----------
+        addColor(CAT.TYPING_POPUP, '打字弹窗，大/小弹窗背景颜色', 'typing_popup_bg_color', '小窗H40dp 大窗H132dp');
+        addColor(CAT.TYPING_POPUP, '打字弹框展开弹框和关闭弹框按钮图标灌色', 'typing_popup_unflod_close_color', '#000000 60%不透明');
+        addColor(CAT.TYPING_POPUP, '打字弹框商店按钮图标灌色', 'typing_popup_store_color', '#000000 60%不透明');
+        addColor(CAT.TYPING_POPUP, '打字弹框语录信息刷新的图标灌色', 'typing_popup_refresh_color', '');
+        addColor(CAT.TYPING_POPUP, '打字弹框语录信息刷新图标的颜色', 'quote_refresh_bg_color', '');
+        addColor(CAT.TYPING_POPUP, '打字弹框tab的正常色值', 'typing_popup_tab_normal_color', '');
+        addColor(CAT.TYPING_POPUP, '打字弹框tab的选中色值', 'typing_popup_tab_selected_color', '');
+        addColor(CAT.TYPING_POPUP, '打字弹窗语录无结果文字色值', 'typing_popup_quote_empty_color', '');
+        addColor(CAT.TYPING_POPUP, '打字弹窗语录背景图的颜色', 'quote_text_color', '');
+        addColor(CAT.TYPING_POPUP, '打字弹窗语录文字色值', 'typing_popup_quote_text_color', '');
+
+        // ---------- Emoji密语 (6月新增) ----------
+        addColor(CAT.MIYU, '密语下拉icon灌色', 'emoji_btn_spinner_bg', '');
+        addColor(CAT.MIYU, '密语添加icon灌色', 'moji_btn_add_bg', '');
+        addColor(CAT.MIYU, '名称字体背景颜色', 'emoji_btn_add_bg_bg', '');
+        addColor(CAT.MIYU, '名称字体颜色', 'miyu_title_color', '');
+        addColor(CAT.MIYU, '选择框中字体颜色', 'miyu_category_text_color', '');
+        addColor(CAT.MIYU, '选择框中选中字体颜色', 'miyu_category_text_select_color', '');
+        addColor(CAT.MIYU, '选择框中背景颜色', 'miyu_category_item_bg', '');
+        addColor(CAT.MIYU, '选择框中选中背景颜色', 'miyu_category_item_select_bg', '');
+        addColor(CAT.MIYU, '列表中类别名称的字体颜色', 'miyu_list_text_color', '');
+        addColor(CAT.MIYU, '组合表情背景图标灌色', 'miyu_bg_icon', '');
+        addColor(CAT.MIYU, '详情弹框背景颜色', 'miyu_detail_popup_bg', '');
+        addColor(CAT.MIYU, '详情弹框字体颜色', 'miyu_detail_text_color', '');
+        addColor(CAT.MIYU, '详情弹框emoji背景颜色', 'miyu_detail_text_bg_color', '');
+        addColor(CAT.MIYU, '详情弹框删除按钮字体颜色', 'miyu_detail_delete_text_color', '');
+
+        // ---------- 编辑页面 ----------
+        addColor(CAT.EDIT, '编辑页文字颜色', 'menu_text_color', '');
+        addColor(CAT.EDIT, '选中态高量色', 'menu_choice_blue', '');
+        addColor(CAT.EDIT, '按键点击态色值', 'menu_btn_press_color', '');
+        addColor(CAT.EDIT, '按键正常态色值', 'menu_btn_normal_color', '');
+        addColor(CAT.EDIT, '中心圆描边', 'menu_round_stroke_color', '');
+
+        // ---------- 剪贴板页面 ----------
+        addColor(CAT.CLIPBOARD, '剪贴板个数色值', 'clipboard_top_text_gray_color', '');
+        addRes(CAT.CLIPBOARD, '每条剪贴板背景图', 'clipboard_item_bg.9.png', '.9.png',
+            ['drawable-xhdpi', 'drawable-night-xhdpi'], 'W42*H42dp', '');
+        addRes(CAT.CLIPBOARD, '剪贴板底部item背景', 'clipboard_bottom_bg.9.png', '.9.png',
+            ['drawable-xhdpi', 'drawable-night-xhdpi'], 'W360*H50dp', '');
+
+        // ---------- 其它 ----------
+        addColor(CAT.OTHER, '二级页面文字颜色', 'text_secondary_color', '');
+        addColor(CAT.OTHER, '点击态色值', 'item_pressed_color', '联想词点击，menu小艺icon点击态');
+        addColor(CAT.OTHER, '普通键盘滑动输入轨迹色值', 'gesture_trail_color', '');
+        addRes(CAT.OTHER, '键盘预览图', 'keyboard_preview.png', '.png',
+            ['drawable-xxhdpi', 'drawable-night-xxhdpi'], 'W360*H234dp', '只需26键预览图');
+        addColor(CAT.OTHER, '音效和震动调整大小控件拖拽圆点色值', 'seekbar_thumb_color', '');
+        addColor(CAT.OTHER, '音效和震动调整大小控件进度条高亮色', 'seekbar_progress_color', '');
+        addColor(CAT.OTHER, '更多候选词右侧功能按键的灌色，更多符号也右侧功能按键的灌色，手写键盘右侧或者左侧icon的颜色', 'margin_icon_color', '');
+        addColor(CAT.OTHER, '表情包名称，作者以及详情文字颜色', 'expression_detail_text_color', 'values / values-night');
+
+        // ---------- 2025年新增 ----------
+        addRes(CAT.NEW2025, '盲打皮肤开关', 'config_is_blind_input', 'bool.xml', 'values', '/', '编辑bools.xml', true, false);
+        addRes(CAT.NEW2025, '删除键显示键盘前景字(盲打)', 'config_is_support_delete_effect', 'bool.xml', 'values', '/',
+            '编辑bools.xml', true, false);
+        addRes(CAT.NEW2025, '上滑输入阴影开关', 'config_is_SlideUp_Input_Bubble_Shadow', 'bool.xml', 'values', '/',
+            '编辑bools.xml', true, false);
+
+        // ============================================================
+        // 增量属性（非必选）—— 完整保留
+        // ============================================================
+        const incKeys = [
+            ['shift功能按键背景-正常态', 'btn_keyboard_shfit_key_normal.9.png', 'W42*H44dp'],
+            ['shift功能按键背景-点击态', 'btn_keyboard_shfit_key_pressed.9.png', ''],
+            ['符号功能按键背景-正常态', 'btn_keyboard_symbol_key_normal.9.png', 'W49*H44dp'],
+            ['符号功能按键背景-点击态', 'btn_keyboard_symbol_key_pressed.9.png', ''],
+            ['中/英功能按键背景-正常态', 'btn_keyboard_zh_en_key_normal.9.png', 'W49*H44dp'],
+            ['中/英功能按键背景-点击态', 'btn_keyboard_zh_en_key_pressed.9.png', ''],
+            ['逗号功能按键背景-正常态', 'btn_keyboard_comma_key_normal.9.png', 'W35*H44dp'],
+            ['逗号功能按键背景-点击态', 'btn_keyboard_comma_key_pressed.9.png', ''],
+            ['长空格按键背景-正常态', 'btn_keyboard_long_space_key_normal.9.png', 'W168*H44dp'],
+            ['长空格按键背景-点击态', 'btn_keyboard_long_space_key_pressed.9.png', ''],
+            ['短空格按键背景-正常态', 'btn_keyboard_short_space_key_normal.9.png', 'W68*H52dp'],
+            ['短空格按键背景-点击态', 'btn_keyboard_short_space_key_pressed.9.png', ''],
+            ['句号功能按键背景-正常态', 'btn_keyboard_period_key_normal.9.png', 'W30*H44dp'],
+            ['句号功能按键背景-点击态', 'btn_keyboard_period_key_pressed.9.png', ''],
+            ['123功能按键背景-正常态', 'btn_keyboard_123_key_normal.9.png', 'W35*H44dp'],
+            ['123功能按键背景-点击态', 'btn_keyboard_123_key_pressed.9.png', ''],
+            ['回车功能按键背景-正常态', 'btn_keyboard_enter_key_normal.9.png', 'W49*H44dp'],
+            ['回车功能按键背景-点击态', 'btn_keyboard_enter_key_pressed.9.png', ''],
+            ['删除功能按键背景-正常态', 'btn_keyboard_del_key_normal.9.png', 'W44*H44dp'],
+            ['删除功能按键背景-点击态', 'btn_keyboard_del_key_pressed.9.png', ''],
+            ['9键"清空"功能按键背景-正常态', 'btn_keyboard_t9_clear_key_normal.9.png', 'W59*H52dp'],
+            ['9键"清空"功能按键背景-点击态', 'btn_keyboard_t9_clear_key_pressed.9.png', ''],
+            ['9键"回车"功能按键背景-正常态', 'btn_keyboard_t9_enter_key_normal.9.png', 'W59*H108dp'],
+            ['9键"回车"功能按键背景-点击态', 'btn_keyboard_t9_enter_key_pressed.9.png', ''],
+            ['123数字键盘"."符号背景-正常态', 'btn_keyboard_123_middle_dot_key_normal.9.png', 'W59*H52dp'],
+            ['123数字键盘"."符号背景-点击态', 'btn_keyboard_123_middle_dot_key_pressed.9.png', ''],
+            ['123数字键盘"@"符号背景-正常态', 'btn_keyboard_123_commercial_at_key_normal.9.png', 'W59*H52dp'],
+            ['123数字键盘"@"符号背景-点击态', 'btn_keyboard_123_commercial_at_key_pressed.9.png', ''],
+            ['符号键盘"更多"功能按键-正常态', 'btn_keyboard_more_symbols_key_normal.9.png', 'W42*H44dp'],
+            ['符号键盘"更多"功能按键-点击态', 'btn_keyboard_more_symbols_key_pressed.9.png', ''],
+            ['符号键盘"返回"功能按键-正常态', 'btn_keyboard_return_key_normal.9.png', 'W49*H44dp'],
+            ['符号键盘"返回"功能按键-点击态', 'btn_keyboard_return_key_pressed.9.png', ''],
+            ['手写"全/半"功能按键-正常态', 'btn_keyborad_hand_write_full_half_key_normal.9.png', 'W36*H44dp'],
+            ['手写"全/半"功能按键-点击态', 'btn_keyborad_hand_write_full_half_key_pressed.9.png', ''],
+        ];
+        incKeys.forEach(([name, fn, size]) => {
+            addRes(CAT.INCREMENTAL, name, fn, '.9.png',
+                ['drawable-xhdpi', 'drawable-night-xhdpi'], size, '增量属性（非必选）', false, false);
+        });
+
+        const incIcons = [
+            ['手写全/半切换icon', 'ic_full_half.svg', 'W24*H24dp'],
+            ['手写半/全切换icon', 'ic_half_full.svg', 'W24*H24dp'],
+            ['"符号"按键icon', 'ic_symbols.svg', 'W24*H24dp'],
+            ['"符"按键icon', 'ic_single_symbols.svg', 'W24*H24dp'],
+            ['26键中文"分词"按键icon', 'ic_participle.svg', 'W24*H24dp'],
+            ['符号页"更多"按键icon', 'ic_more_symbols.svg', 'W24*H24dp'],
+            ['"123"数字键盘按键icon', 'ic_number_123.svg', 'W24*H24dp'],
+            ['9键"清空"按键icon', 'ic_t9_clear_composing.svg', 'W24*H24dp'],
+            ['符号页"返回"按键icon', 'ic_symbols_return.svg', 'W24*H24dp'],
+            ['回车按键"go"icon', 'ic_go.svg', 'W24*H24dp'],
+            ['回车按键"下一步"icon', 'ic_next.svg', 'W24*H24dp'],
+            ['回车按键"上一步"icon', 'ic_previous.svg', 'W24*H24dp'],
+            ['回车按键"完成"icon', 'ic_done.svg', 'W24*H24dp'],
+            ['回车按键"发送"icon', 'ic_send.svg', 'W24*H24dp'],
+            ['空格线段+语音键', 'ic_space_line_and_mic.png', 'W40*H22dp'],
+        ];
+        incIcons.forEach(([name, fn, size]) => {
+            const ext = fn.endsWith('.svg') ? '.svg' : '.png';
+            const locs = ext === '.svg' ? ['drawable', 'drawable-night'] : ['drawable-xhdpi', 'drawable-night-xhdpi'];
+            addRes(CAT.INCREMENTAL, name, fn, ext, locs, size, '增量属性（非必选）', false, false);
+        });
+
+        // 8月字母按键背景 (26键)
+        const keys26 = 'QWERTYUIOPASDFGHJKLZXCVBNM'.split('');
+        const positions26 = [
+            ['row1', 1, 10],
+            ['row2', 1, 9],
+            ['row3', 1, 7]
+        ];
+        let idx26 = 0;
+        for (let r = 0; r < positions26.length; r++) {
+            const [row, start, end] = positions26[r];
+            for (let c = start; c <= end; c++) {
+                const letter = keys26[idx26++];
+                if (!letter) break;
+                const baseName = `btn_keyboard_${row}_column${c}_key`;
+                const nameDisplay = `26键-${letter}`;
+                addRes(CAT.INCREMENTAL, `${nameDisplay} 正常态`, `${baseName}_normal.9.png`, '.9.png',
+                    ['drawable-xhdpi', 'drawable-night-xhdpi'], 'W30*H44dp', '字母按键背景', false, false);
+                addRes(CAT.INCREMENTAL, `${nameDisplay} 点击态`, `${baseName}_pressed.9.png`, '.9.png',
+                    ['drawable-xhdpi', 'drawable-night-xhdpi'], '', '字母按键背景', false, false);
+            }
+        }
+
+        // 9键字母按键
+        const keys9 = ['分词', 'ABC', 'DEF', 'GHI', 'JKL', 'MNO', 'PQRS', 'TUV', 'WXYZ'];
+        const positions9 = [
+            ['row1', 1, 3],
+            ['row2', 1, 3],
+            ['row3', 1, 3]
+        ];
+        let idx9 = 0;
+        for (let r = 0; r < positions9.length; r++) {
+            const [row, start, end] = positions9[r];
+            for (let c = start; c <= end; c++) {
+                const label = keys9[idx9++];
+                if (!label) break;
+                const baseName = `btn_keyboard_${row}_column${c}_key_t9`;
+                const nameDisplay = `9键-${label}`;
+                addRes(CAT.INCREMENTAL, `${nameDisplay} 正常态`, `${baseName}_normal.9.png`, '.9.png',
+                    ['drawable-xhdpi', 'drawable-night-xhdpi'], 'W68*H52dp', '9键字母按键', false, false);
+                addRes(CAT.INCREMENTAL, `${nameDisplay} 点击态`, `${baseName}_pressed.9.png`, '.9.png',
+                    ['drawable-xhdpi', 'drawable-night-xhdpi'], '', '9键字母按键', false, false);
+            }
+        }
+
+        // 其他增量资源
+        addRes(CAT.INCREMENTAL, '动态背景视频', 'keyboard_background_video.mp4', '.mp4',
+            ['raw', 'raw-night'], 'W1080dp*H831dp', '时长≤10s 大小≤1M（不用乘倍数，直接使用）', false, false);
+        addRes(CAT.INCREMENTAL, '按键动效配置', 'key_effect.ini', '.ini',
+            ['assets'], '/', '编辑配置Type/Pivot', false, false);
+        addRes(CAT.INCREMENTAL, '按键动效图片', 'key_anim_common_img.png', '.png',
+            ['drawable-xhdpi', 'drawable-night-xhdpi'], '', '参考按键动效文件夹', false, false);
+        addRes(CAT.INCREMENTAL, '更多候选词界面大背景', 'more_suggestion_bg.png', '.png',
+            ['drawable-xxhdpi', 'drawable-night-xxhdpi'], 'W360dp*H277dp', '', false, false);
+        addRes(CAT.INCREMENTAL, '更多符号页界面大背景', 'more_symbols_bg.png', '.png',
+            ['drawable-xxhdpi', 'drawable-night-xxhdpi'], '', '', false, false);
+        addRes(CAT.INCREMENTAL, 'emoji界面大背景', 'board_emoji_background.png', '.png',
+            ['drawable-xxhdpi', 'drawable-night-xxhdpi'], '', '', false, false);
+
+        // ============================================================
+        // 2. 核心逻辑：点击态继承正常态尺寸
+        // ============================================================
+        function inheritSizeForPairs() {
+            const pairs = {};
+            RESOURCES.forEach(r => {
+                if (!pairs[r.category]) pairs[r.category] = [];
+                pairs[r.category].push(r);
+            });
+            Object.keys(pairs).forEach(cat => {
+                const items = pairs[cat];
+                for (let i = 0; i < items.length; i++) {
+                    const item = items[i];
+                    if (item.isColor) continue;
+                    if (item.size) continue;
+                    const nameParts = item.name.split('-');
+                    if (nameParts.length < 2) continue;
+                    const prefix = nameParts[0];
+                    for (let j = 0; j < items.length; j++) {
+                        const other = items[j];
+                        if (other === item) continue;
+                        if (other.isColor) continue;
+                        if (!other.size) continue;
+                        if (other.name.startsWith(prefix) && other.name.includes('正常态')) {
+                            item.size = other.size;
+                            break;
+                        }
+                    }
+                }
+            });
+        }
+        inheritSizeForPairs();
+
+        // ============================================================
+        // 3. 工具函数
+        // ============================================================
+        function getImageDimensions(file) {
+            return new Promise((resolve) => {
+                if (file.type === 'image/svg+xml' || file.name.endsWith('.svg')) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        try {
+                            const text = e.target.result;
+                            const parser = new DOMParser();
+                            const doc = parser.parseFromString(text, 'text/xml');
+                            const svg = doc.documentElement;
+                            let width = svg.getAttribute('width');
+                            let height = svg.getAttribute('height');
+                            if (!width || !height || isNaN(parseFloat(width)) || isNaN(parseFloat(height))) {
+                                const viewBox = svg.getAttribute('viewBox');
+                                if (viewBox) {
+                                    const parts = viewBox.split(/\s+/);
+                                    if (parts.length >= 4) {
+                                        const vbw = parseFloat(parts[2]);
+                                        const vbh = parseFloat(parts[3]);
+                                        if (!isNaN(vbw) && !isNaN(vbh)) {
+                                            resolve({ width: Math.round(vbw), height: Math.round(vbh) });
+                                            return;
+                                        }
+                                    }
+                                }
+                            } else {
+                                const wNum = parseFloat(width);
+                                const hNum = parseFloat(height);
+                                if (!isNaN(wNum) && !isNaN(hNum)) {
+                                    resolve({ width: Math.round(wNum), height: Math.round(hNum) });
+                                    return;
+                                }
+                            }
+                            const img = new Image();
+                            img.onload = () => {
+                                resolve({ width: img.naturalWidth, height: img.naturalHeight });
+                            };
+                            img.onerror = () => {
+                                resolve(null);
+                            };
+                            img.src = URL.createObjectURL(file);
+                            setTimeout(() => URL.revokeObjectURL(img.src), 1000);
+                        } catch (err) {
+                            const img = new Image();
+                            img.onload = () => {
+                                resolve({ width: img.naturalWidth, height: img.naturalHeight });
+                            };
+                            img.onerror = () => {
+                                resolve(null);
+                            };
+                            img.src = URL.createObjectURL(file);
+                            setTimeout(() => URL.revokeObjectURL(img.src), 1000);
+                        }
+                    };
+                    reader.onerror = () => resolve(null);
+                    reader.readAsText(file);
+                    return;
+                }
+
+                if (!file.type.startsWith('image/')) {
+                    resolve(null);
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        resolve({ width: img.naturalWidth, height: img.naturalHeight });
+                    };
+                    img.onerror = () => {
+                        resolve(null);
+                    };
+                    img.src = e.target.result;
+                };
+                reader.onerror = () => resolve(null);
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function copyFileName(fileName) {
+            try {
+                await navigator.clipboard.writeText(fileName);
+                showToast(`✅ 已复制: ${fileName}`, 'info');
+            } catch (err) {
+                const textarea = document.createElement('textarea');
+                textarea.value = fileName;
+                document.body.appendChild(textarea);
+                textarea.select();
+                try {
+                    document.execCommand('copy');
+                    showToast(`✅ 已复制: ${fileName}`, 'info');
+                } catch (e) {
+                    showToast('❌ 复制失败', 'error');
+                }
+                document.body.removeChild(textarea);
+            }
+        }
+
+        // ============================================================
+        // 4. 生成UI
+        // ============================================================
+        const categoryMap = {};
+        RESOURCES.forEach(r => {
+            if (!categoryMap[r.category]) categoryMap[r.category] = [];
+            categoryMap[r.category].push(r);
+        });
+
+        const categoryOrder = [
+            CAT.KEYBOARD, CAT.BG, CAT.FUNC_BAR, CAT.SHIFT, CAT.DELETE, CAT.RETURN,
+            CAT.EMOJI, CAT.LANG, CAT.JP, CAT.KEY_COLOR, CAT.T9,
+            CAT.BUBBLE_LONG, CAT.BUBBLE_SHORT, CAT.CANDIDATE,
+            CAT.FLOAT, CAT.PINYIN, CAT.EMOJI_PAGE,
+            CAT.TYPING_POPUP, CAT.MIYU, CAT.EDIT, CAT.CLIPBOARD,
+            CAT.OTHER, CAT.NEW2025, CAT.INCREMENTAL
+        ];
+
+        document.getElementById('totalCount').textContent = RESOURCES.length;
+
+        const tabContainer = document.getElementById('tabContainer');
+        const sectionsContainer = document.getElementById('sectionsContainer');
+
+        // 尺寸格式化
+        function formatSize(sizeStr, note) {
+            if (!sizeStr) return '—';
+            if (note && (note.includes('不用乘倍数') || note.includes('直接使用'))) {
+                return sizeStr;
+            }
+            let match = sizeStr.match(/W\s*(\d+)\s*(?:dp)?\s*(?:\*|x)\s*H\s*(\d+)\s*(?:dp)?/i);
+            if (match) {
+                const w = parseInt(match[1], 10);
+                const h = parseInt(match[2], 10);
+                const w2 = w * 2,
+                    h2 = h * 2;
+                const w3 = w * 3,
+                    h3 = h * 3;
+                return `${sizeStr}  (2x: W${w2}*H${h2}px, 3x: W${w3}*H${h3}px)`;
+            }
+            match = sizeStr.match(/W\s*(\d+)\s*(?:dp)?/i);
+            if (match) {
+                const w = parseInt(match[1], 10);
+                const w2 = w * 2,
+                    w3 = w * 3;
+                return `${sizeStr}  (2x: ${w2}px, 3x: ${w3}px)`;
+            }
+            return sizeStr;
+        }
+
+        function hasNightLocation(locations) {
+            return locations.some(loc => loc.includes('night'));
+        }
+
+        // 创建上传区域
+        function createUploadArea(r, type, labelText, fileField, uploadedField, dimsField, card) {
+            const ua = document.createElement('div');
+            ua.className = 'upload-area';
+
+            const label = document.createElement('span');
+            label.className = 'label';
+            label.textContent = labelText;
+            ua.appendChild(label);
+
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = r.format === '.9.png' ? '.png' :
+                r.format === '.svg' ? '.svg' :
+                    r.format === '.mp4' ? '.mp4' :
+                        r.format === '.ini' ? '.ini' :
+                            r.format === '.png' ? '.png' : '*';
+            ua.appendChild(fileInput);
+
+            const status = document.createElement('span');
+            status.className = 'status empty';
+            status.textContent = r[uploadedField] ? '✅ 已上传' : '⏳ 未上传';
+            ua.appendChild(status);
+
+            const cancelBtn = document.createElement('button');
+            cancelBtn.className = 'cancel-btn';
+            cancelBtn.textContent = '✕ 取消';
+            cancelBtn.title = '取消上传';
+            cancelBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                r[uploadedField] = false;
+                r[fileField] = null;
+                r[dimsField] = null;
+                fileInput.value = '';
+                status.textContent = '⏳ 未上传';
+                status.className = 'status empty';
+                cancelBtn.classList.remove('visible');
+                const nameDisplay = card.querySelector('.file-name-display');
+                if (nameDisplay) {
+                    nameDisplay.textContent = r.fileName || '';
+                }
+                updateDimDisplay(card, r);
+                updateStats();
+                showToast(`已取消 ${r.fileName} (${labelText}) 的上传`, 'info');
+            });
+            ua.appendChild(cancelBtn);
+
+            ua.addEventListener('click', (e) => {
+                if (e.target.closest('.cancel-btn')) return;
+                fileInput.click();
+            });
+
+            ua.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                ua.classList.add('drag-over');
+            });
+            ua.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                ua.classList.remove('drag-over');
+            });
+            ua.addEventListener('drop', (e) => {
+                e.preventDefault();
+                ua.classList.remove('drag-over');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    const file = files[0];
+                    handleFile(file);
+                }
+            });
+
+            const handleFile = async (file) => {
+                r[uploadedField] = true;
+                r[fileField] = file;
+                status.textContent = '✅ 已上传';
+                status.className = 'status success';
+                cancelBtn.classList.add('visible');
+                const nameDisplay = card.querySelector('.file-name-display');
+                if (nameDisplay) {
+                    nameDisplay.textContent = `${r.fileName} (${file.name})`;
+                }
+                const dims = await getImageDimensions(file);
+                if (dims) {
+                    r[dimsField] = dims;
+                } else {
+                    r[dimsField] = null;
+                }
+                updateDimDisplay(card, r);
+                updateStats();
+                showToast(`✅ ${r.fileName} (${labelText}) 上传成功`, 'success');
+            };
+
+            fileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    handleFile(file);
+                }
+                fileInput.value = '';
+            });
+
+            if (r[uploadedField]) {
+                status.textContent = '✅ 已上传';
+                status.className = 'status success';
+                cancelBtn.classList.add('visible');
+                if (r[fileField]) {
+                    const nameDisplay = card.querySelector('.file-name-display');
+                    if (nameDisplay) {
+                        nameDisplay.textContent = `${r.fileName} (${r[fileField].name})`;
+                    }
+                }
+                updateDimDisplay(card, r);
+            }
+
+            return ua;
+        }
+
+        function updateDimDisplay(card, r) {
+            const dimDisplay = card.querySelector('.image-dimension');
+            if (!dimDisplay) return;
+            let parts = [];
+            if (r.dimsLight && r.dimsLight.width) {
+                parts.push(`浅色: ${r.dimsLight.width}×${r.dimsLight.height}px`);
+            }
+            if (r.dimsNight && r.dimsNight.width) {
+                parts.push(`深色: ${r.dimsNight.width}×${r.dimsNight.height}px`);
+            }
+            if (parts.length === 0) {
+                if (r.uploadedLight || r.uploadedNight) {
+                    dimDisplay.textContent = '⚠️ 无法读取宽高';
+                } else {
+                    dimDisplay.textContent = '';
+                }
+            } else {
+                dimDisplay.textContent = '🖼️ ' + parts.join(' | ');
+            }
+        }
+
+        function createColorControls(r) {
+            const container = document.createElement('div');
+            container.className = 'color-control';
+
+            const lightRow = createColorRow('☀️ 浅色', r, 'colorLight');
+            container.appendChild(lightRow);
+            const nightRow = createColorRow('🌙 深色', r, 'colorNight');
+            container.appendChild(nightRow);
+
+            return container;
+        }
+
+        function createColorRow(labelText, r, field) {
+            const row = document.createElement('div');
+            row.className = 'color-row';
+
+            const label = document.createElement('span');
+            label.className = 'label';
+            label.textContent = labelText;
+            row.appendChild(label);
+
+            const picker = document.createElement('input');
+            picker.type = 'color';
+            const currentVal = r[field] || '';
+            picker.value = currentVal && currentVal.length === 9 ? currentVal.substring(0, 7) :
+                (currentVal || '#000000');
+            row.appendChild(picker);
+
+            const textInput = document.createElement('input');
+            textInput.type = 'text';
+            textInput.placeholder = '#RRGGBB 或 #AARRGGBB';
+            textInput.value = currentVal;
+            row.appendChild(textInput);
+
+            const swatch = document.createElement('div');
+            swatch.className = 'color-swatch';
+            swatch.style.backgroundColor = currentVal || '#000000';
+            row.appendChild(swatch);
+
+            picker.addEventListener('input', (e) => {
+                const val = e.target.value;
+                r[field] = val;
+                textInput.value = val;
+                swatch.style.backgroundColor = val;
+                updateStats();
+            });
+
+            textInput.addEventListener('input', (e) => {
+                let val = e.target.value.trim();
+                if (val && !val.startsWith('#')) {
+                    val = '#' + val;
+                }
+                const hex6 = /^#[0-9A-Fa-f]{6}$/;
+                const hex8 = /^#[0-9A-Fa-f]{8}$/;
+                if (hex6.test(val) || hex8.test(val)) {
+                    r[field] = val;
+                    if (hex8.test(val)) {
+                        picker.value = val.substring(0, 7);
+                    } else {
+                        picker.value = val;
+                    }
+                    swatch.style.backgroundColor = val;
+                    updateStats();
+                }
+            });
+
+            if (currentVal) {
+                const is8 = /^#[0-9A-Fa-f]{8}$/.test(currentVal);
+                picker.value = is8 ? currentVal.substring(0, 7) : currentVal;
+                textInput.value = currentVal;
+                swatch.style.backgroundColor = currentVal;
+            }
+
+            return row;
+        }
+
+        function updateStats() {
+            let uploaded = 0,
+                colorCount = 0;
+            RESOURCES.forEach(r => {
+                if (r.isColor) {
+                    if (r.colorLight || r.colorNight) colorCount++;
+                } else {
+                    if (r.uploadedLight) uploaded++;
+                    if (r.uploadedNight) uploaded++;
+                }
+            });
+            document.getElementById('uploadedCount').textContent = uploaded;
+            document.getElementById('colorCount').textContent = colorCount;
+        }
+
+        // ---------- 生成卡片 ----------
+        categoryOrder.forEach((cat, idx) => {
+            const items = categoryMap[cat] || [];
+            if (items.length === 0) return;
+            const isActive = idx === 0;
+            const tabBtn = document.createElement('button');
+            tabBtn.textContent = `${cat} (${items.length})`;
+            tabBtn.dataset.cat = cat;
+            if (isActive) tabBtn.classList.add('active');
+            tabBtn.addEventListener('click', () => switchTab(cat));
+            tabContainer.appendChild(tabBtn);
+
+            const section = document.createElement('div');
+            section.className = `category-section${isActive ? ' active' : ''}`;
+            section.dataset.cat = cat;
+
+            const title = document.createElement('div');
+            title.className = 'section-title';
+            title.innerHTML = `${cat} <span class="count">${items.length} 项</span>`;
+            section.appendChild(title);
+
+            const list = document.createElement('div');
+            list.className = 'resource-list';
+
+            items.forEach((r, ri) => {
+                const card = document.createElement('div');
+                card.className = 'resource-card';
+                card.dataset.resId = `${cat}-${ri}`;
+                card.dataset.searchText = `${r.name} ${r.fileName} ${r.locations.join(' ')} ${r.note || ''}`.toLowerCase();
+
+                const preview = document.createElement('div');
+                preview.className = 'preview';
+                if (r.isColor) {
+                    preview.textContent = '🎨';
+                } else {
+                    preview.textContent = '📷 示意图';
+                }
+                card.appendChild(preview);
+
+                const info = document.createElement('div');
+                info.className = 'info';
+
+                const meta = document.createElement('div');
+                meta.className = 'meta';
+                const nameSpan = document.createElement('span');
+                nameSpan.className = 'name';
+                nameSpan.textContent = r.name;
+                const badge = document.createElement('span');
+                badge.className = 'badge';
+                badge.textContent = r.format || (r.isColor ? '色值' : '文件');
+                meta.appendChild(nameSpan);
+                meta.appendChild(badge);
+                info.appendChild(meta);
+
+                const details = document.createElement('div');
+                details.className = 'details';
+                if (r.locations && r.locations.length > 0) {
+                    const locs = document.createElement('span');
+                    locs.innerHTML = r.locations.map(l => `<span class="loc">${l}</span>`).join(' ');
+                    details.appendChild(locs);
+                }
+                if (r.note) {
+                    const nt = document.createElement('span');
+                    nt.textContent = `💬 ${r.note}`;
+                    details.appendChild(nt);
+                }
+                if (r.size) {
+                    const sizeSpan = document.createElement('span');
+                    sizeSpan.className = 'size-hint';
+                    sizeSpan.textContent = `📐 ${formatSize(r.size, r.note)}`;
+                    details.appendChild(sizeSpan);
+                }
+                info.appendChild(details);
+
+                const fnameDisplay = document.createElement('div');
+                fnameDisplay.className = 'file-name-display';
+                fnameDisplay.textContent = r.fileName || '';
+                fnameDisplay.title = '点击复制文件名';
+                fnameDisplay.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    copyFileName(r.fileName);
+                });
+                info.appendChild(fnameDisplay);
+
+                if (!r.isColor) {
+                    const dimDisplay = document.createElement('div');
+                    dimDisplay.className = 'image-dimension';
+                    info.appendChild(dimDisplay);
+                }
+
+                card.appendChild(info);
+
+                const actions = document.createElement('div');
+                actions.className = 'actions';
+
+                if (r.isColor) {
+                    const colorControls = createColorControls(r);
+                    actions.appendChild(colorControls);
+                } else {
+                    const hasNight = hasNightLocation(r.locations);
+                    if (hasNight) {
+                        const lightArea = createUploadArea(r, 'light', '☀️ 浅色', 'fileLight', 'uploadedLight', 'dimsLight', card);
+                        actions.appendChild(lightArea);
+                        const nightArea = createUploadArea(r, 'night', '🌙 深色', 'fileNight', 'uploadedNight', 'dimsNight', card);
+                        actions.appendChild(nightArea);
+                    } else {
+                        const singleArea = createUploadArea(r, 'light', '📎 上传', 'fileLight', 'uploadedLight', 'dimsLight', card);
+                        actions.appendChild(singleArea);
+                    }
+                }
+
+                card.appendChild(actions);
+                list.appendChild(card);
+
+                if (!r.isColor) {
+                    updateDimDisplay(card, r);
+                }
+            });
+
+            section.appendChild(list);
+            sectionsContainer.appendChild(section);
+        });
+
+        // ===== 切换分类 =====
+        function switchTab(cat) {
+            document.querySelectorAll('.tabs-container button').forEach(b => {
+                b.classList.toggle('active', b.dataset.cat === cat);
+            });
+            document.querySelectorAll('.category-section').forEach(s => {
+                s.classList.toggle('active', s.dataset.cat === cat);
+            });
+            applySearch();
+        }
+
+        // ===== 搜索功能 =====
+        const searchInput = document.getElementById('searchInput');
+        const clearSearchBtn = document.getElementById('clearSearchBtn');
+
+        function applySearch() {
+            const keyword = searchInput.value.trim().toLowerCase();
+            const activeCat = document.querySelector('.tabs-container button.active');
+            if (!activeCat) return;
+            const cat = activeCat.dataset.cat;
+            const section = document.querySelector(`.category-section[data-cat="${cat}"]`);
+            if (!section) return;
+            const cards = section.querySelectorAll('.resource-card');
+            cards.forEach(card => {
+                const text = card.dataset.searchText || '';
+                if (keyword === '') {
+                    card.classList.remove('hidden-by-search');
+                } else {
+                    if (text.includes(keyword)) {
+                        card.classList.remove('hidden-by-search');
+                    } else {
+                        card.classList.add('hidden-by-search');
+                    }
+                }
+            });
+            if (keyword) {
+                clearSearchBtn.classList.add('visible');
+            } else {
+                clearSearchBtn.classList.remove('visible');
+            }
+        }
+
+        searchInput.addEventListener('input', applySearch);
+
+        clearSearchBtn.addEventListener('click', () => {
+            searchInput.value = '';
+            applySearch();
+            searchInput.focus();
+        });
+
+        setTimeout(applySearch, 100);
+
+        updateStats();
+
+        function showToast(msg, type = '') {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = `toast ${type}`;
+            setTimeout(() => t.classList.add('show'), 10);
+            clearTimeout(t._hide);
+            t._hide = setTimeout(() => t.classList.remove('show'), 3000);
+        }
+
+        function clearAll() {
+            if (!confirm('确定要清空所有上传的文件和色值吗？')) return;
+            RESOURCES.forEach(r => {
+                if (r.isColor) {
+                    r.colorLight = '';
+                    r.colorNight = '';
+                } else {
+                    r.uploadedLight = false;
+                    r.fileLight = null;
+                    r.dimsLight = null;
+                    r.uploadedNight = false;
+                    r.fileNight = null;
+                    r.dimsNight = null;
+                }
+            });
+            document.querySelectorAll('.resource-card').forEach(card => {
+                const colorRows = card.querySelectorAll('.color-row');
+                colorRows.forEach(row => {
+                    const picker = row.querySelector('input[type="color"]');
+                    const textInput = row.querySelector('input[type="text"]');
+                    const swatch = row.querySelector('.color-swatch');
+                    if (picker) picker.value = '#000000';
+                    if (textInput) textInput.value = '';
+                    if (swatch) swatch.style.backgroundColor = '#ffffff';
+                });
+                const uploadAreas = card.querySelectorAll('.upload-area');
+                uploadAreas.forEach(ua => {
+                    const status = ua.querySelector('.status');
+                    const cancelBtn = ua.querySelector('.cancel-btn');
+                    const fileInput = ua.querySelector('input[type="file"]');
+                    if (status) {
+                        status.textContent = '⏳ 未上传';
+                        status.className = 'status empty';
+                    }
+                    if (cancelBtn) cancelBtn.classList.remove('visible');
+                    if (fileInput) fileInput.value = '';
+                });
+                const fname = card.querySelector('.file-name-display');
+                const rId = card.dataset.resId;
+                if (fname && rId) {
+                    const [cat, idx] = rId.split('-');
+                    const items = categoryMap[cat] || [];
+                    const r = items[parseInt(idx)];
+                    if (r) fname.textContent = r.fileName || '';
+                }
+                const dimDisplay = card.querySelector('.image-dimension');
+                if (dimDisplay) dimDisplay.textContent = '';
+            });
+            updateStats();
+            showToast('🗑️ 已清空全部', '');
+        }
+
+        // ============================================================
+        // 5. 导出功能
+        // ============================================================
+        async function exportAll() {
+            const zip = new JSZip();
+            let hasContent = false;
+            let fileCount = 0;
+
+            RESOURCES.forEach(r => {
+                if (r.isColor) return;
+                const locations = r.locations || [];
+                if (r.uploadedLight && r.fileLight) {
+                    const lightDirs = locations.filter(l => !l.includes('night'));
+                    if (lightDirs.length === 0) lightDirs.push(locations[0]);
+                    lightDirs.forEach(dir => {
+                        zip.file(`${dir}/${r.fileName}`, r.fileLight);
+                        hasContent = true;
+                        fileCount++;
+                    });
+                }
+                if (r.uploadedNight && r.fileNight) {
+                    const nightDirs = locations.filter(l => l.includes('night'));
+                    if (nightDirs.length === 0) nightDirs.push(locations[0]);
+                    nightDirs.forEach(dir => {
+                        zip.file(`${dir}/${r.fileName}`, r.fileNight);
+                        hasContent = true;
+                        fileCount++;
+                    });
+                }
+            });
+
+            const colorLightMap = {};
+            const colorNightMap = {};
+            RESOURCES.forEach(r => {
+                if (!r.isColor) return;
+                if (r.colorLight) {
+                    colorLightMap[r.fileName] = { name: r.name, value: r.colorLight, cat: r.category };
+                }
+                if (r.colorNight) {
+                    colorNightMap[r.fileName] = { name: r.name, value: r.colorNight, cat: r.category };
+                }
+            });
+
+            function buildColorsXml(colorMap) {
+                let xml = '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n';
+                const commentMap = {
+                    [CAT.KEYBOARD]: '键盘区域',
+                    [CAT.KEY_COLOR]: '按键文字颜色',
+                    [CAT.BUBBLE_LONG]: '长按气泡',
+                    [CAT.BUBBLE_SHORT]: '短按气泡',
+                    [CAT.CANDIDATE]: '候选词栏',
+                    [CAT.FLOAT]: '悬浮键盘',
+                    [CAT.PINYIN]: '拼音view',
+                    [CAT.EMOJI_PAGE]: 'emoji页面',
+                    [CAT.TYPING_POPUP]: '打字弹窗',
+                    [CAT.MIYU]: 'emoji密语',
+                    [CAT.EDIT]: '编辑界面',
+                    [CAT.CLIPBOARD]: '剪贴板',
+                    [CAT.OTHER]: '其它',
+                    [CAT.NEW2025]: '2025年新增',
+                    [CAT.INCREMENTAL]: '增量属性',
+                    [CAT.BG]: '键盘背景',
+                    [CAT.FUNC_BAR]: '功能栏',
+                    [CAT.SHIFT]: 'Shift按键',
+                    [CAT.DELETE]: '删除按键',
+                    [CAT.RETURN]: '回车按键',
+                    [CAT.EMOJI]: 'Emoji相关',
+                    [CAT.LANG]: '中/英切换',
+                    [CAT.JP]: '日语键盘',
+                    [CAT.T9]: '9键键盘',
+                };
+                let lastCat = null;
+                const sortedKeys = Object.keys(colorMap).sort();
+                for (const key of sortedKeys) {
+                    const item = colorMap[key];
+                    const cat = item.cat;
+                    if (cat !== lastCat) {
+                        const comment = commentMap[cat] || cat;
+                        xml += `\n    <!-- ${comment} -->\n`;
+                        lastCat = cat;
+                    }
+                    xml += `    <!-- ${item.name} -->\n`;
+                    xml += `    <color name="${key}">${item.value}</color>\n`;
+                }
+                xml += '\n</resources>';
+                return xml;
+            }
+
+            if (Object.keys(colorLightMap).length > 0) {
+                const xml = buildColorsXml(colorLightMap);
+                zip.file('values/colors.xml', xml);
+                hasContent = true;
+            }
+            if (Object.keys(colorNightMap).length > 0) {
+                const xml = buildColorsXml(colorNightMap);
+                zip.file('values-night/colors.xml', xml);
+                hasContent = true;
+            }
+
+            if (!hasContent) {
+                showToast('⚠️ 没有可导出的内容，请先上传文件或设置色值', 'error');
+                return;
+            }
+
+            try {
+                const blob = await zip.generateAsync({ type: 'blob' });
+                saveAs(blob, 'keyboard_theme_resources.zip');
+                showToast(`📦 导出成功! 包含 ${fileCount} 个文件 + 色值`, 'success');
+            } catch (err) {
+                showToast('❌ 导出失败: ' + err.message, 'error');
+                console.error(err);
+            }
+        }
+
+        window.exportAll = exportAll;
+        window.clearAll = clearAll;
+        window.switchTab = switchTab;
+
+        console.log(`✅ 加载完成，共 ${RESOURCES.length} 个资源项`);
+    </script>
+</body>
+
+</html>
