@@ -10,7 +10,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js">
     </script>
     <style>
-        /* ===== 全局样式 ===== */
+        /* ===== 样式与上一版完全一致 ===== */
         * {
             margin: 0;
             padding: 0;
@@ -30,7 +30,6 @@
             margin: 0 auto;
         }
 
-        /* ===== 固定顶部栏 ===== */
         .fixed-header {
             position: fixed;
             top: 0;
@@ -132,7 +131,6 @@
             color: #1e293b;
         }
 
-        /* 搜索框 */
         .fixed-header .search-box {
             flex: 1 1 240px;
             min-width: 160px;
@@ -223,7 +221,6 @@
             background: #eef2f6;
         }
 
-        /* ===== 内容区 ===== */
         .category-section {
             display: none;
             animation: fadeIn .25s ease;
@@ -569,7 +566,6 @@
             background: #2563eb;
         }
 
-        /* ===== 新手教程弹窗 ===== */
         .tutorial-overlay {
             display: none;
             position: fixed;
@@ -878,54 +874,47 @@
                 <button class="close-btn" onclick="closeTutorial()">✕</button>
                 <h2>📖 新手教程</h2>
                 <div class="subtitle">快速上手 — 5 步完成主题资源收集与导出</div>
-
                 <div class="tutorial-step">
                     <div class="step-num">1</div>
                     <div class="step-content">
                         <h3>📂 切换资源分类</h3>
-                        <p>点击顶部 <span class="highlight">Tab
-                                标签</span>（如“键盘区域-按键”、“键盘背景”等），切换查看不同类别的资源条目。每个分类下的资源会按卡片形式展示，方便集中处理。</p>
+                        <p>点击顶部 <span class="highlight">Tab 标签</span>（如“键盘区域-按键”、“键盘背景”等），切换查看不同类别的资源条目。</p>
                     </div>
                 </div>
-
                 <div class="tutorial-step">
                     <div class="step-num">2</div>
                     <div class="step-content">
                         <h3>📤 上传图片文件</h3>
                         <p>每个资源卡片右侧有 <span class="highlight">上传区域</span>。点击区域或拖拽文件到区域内即可上传。如果资源同时需要浅色和深色两套图片，卡片会显示“☀️
-                            浅色”和“🌙 深色”两个独立上传区，分别上传对应的图片即可。</p>
+                            浅色”和“🌙 深色”两个独立上传区。</p>
+                        <p style="margin-top:4px;font-size:12px;color:#64748b;">💡 系统会校验文件名后缀：.9.png 要求以 .9.png 结尾，普通
+                            PNG 要求 .png 结尾，SVG 要求 .svg 结尾。</p>
                     </div>
                 </div>
-
                 <div class="tutorial-step">
                     <div class="step-num">3</div>
                     <div class="step-content">
                         <h3>🎨 设置色值</h3>
-                        <p>对于色值类型的资源（如“按键文字颜色”），卡片上会显示 <span class="highlight">色值输入区</span>。您可以直接输入 <code>#RRGGBB</code>
-                            格式的 HEX 色值，也可以点击取色盘直观选取。浅色和深色模式分别独立设置。</p>
+                        <p>对于色值类型的资源，卡片上会显示 <span class="highlight">色值输入区</span>。您可以直接输入 <code>#RRGGBB</code> 格式的 HEX
+                            色值，也可以点击取色盘直观选取。</p>
                     </div>
                 </div>
-
                 <div class="tutorial-step">
                     <div class="step-num">4</div>
                     <div class="step-content">
                         <h3>🔍 搜索快速定位</h3>
-                        <p>在顶部 <span class="highlight">搜索框</span>
-                            中输入关键词（如资源名称、文件名、存放路径），当前分类下的卡片会自动过滤，仅显示匹配的结果，帮您快速找到目标资源。</p>
+                        <p>在顶部 <span class="highlight">搜索框</span> 中输入关键词，当前分类下的卡片会自动过滤，仅显示匹配的结果。</p>
                     </div>
                 </div>
-
                 <div class="tutorial-step">
                     <div class="step-num">5</div>
                     <div class="step-content">
                         <h3>📦 一键导出打包</h3>
-                        <p>完成所有资源的上传和色值设置后，点击顶部 <span class="highlight">“📦 导出 ZIP”</span> 按钮。系统会自动将图片按
-                            <code>drawable-xhdpi</code>、<code>drawable-night-xhdpi</code> 等目录分类打包，同时生成
-                            <code>values/colors.xml</code> 和 <code>values-night/colors.xml</code>，一键下载完整资源包。
+                        <p>点击顶部 <span class="highlight">“📦 导出 ZIP”</span> 按钮，系统自动将图片按目录分类打包，并生成
+                            <code>values/colors.xml</code> 和 <code>values-night/colors.xml</code>。
                         </p>
                     </div>
                 </div>
-
                 <div class="tutorial-footer">
                     <button class="btn-secondary" onclick="closeTutorial()">关闭</button>
                     <button class="btn-primary" onclick="closeTutorial()">开始使用 🚀</button>
@@ -951,8 +940,6 @@
             document.getElementById('tutorialOverlay').classList.remove('open');
             document.body.style.overflow = '';
         }
-
-        // 点击弹窗外部关闭（已在 HTML 中处理）
 
         // ============================================================
         // 1. 资源定义 (完整保留)
@@ -1379,6 +1366,45 @@
         // ============================================================
         // 3. 工具函数
         // ============================================================
+        // --- 文件类型校验（基于文件名后缀） ---
+        async function validateFileType(file, expectedFormat) {
+            const fileName = file.name;
+
+            // .9.png 校验：必须以 .9.png 结尾
+            if (expectedFormat === '.9.png') {
+                if (!fileName.endsWith('.9.png')) {
+                    return { valid: false, message: '文件名必须以 .9.png 结尾' };
+                }
+                // 额外检查：不能以 .png 结尾但不是 .9.png（即 .9.png 是真正的后缀）
+                // 上面已经用 endsWith 确保了 .9.png，所以无需额外逻辑
+                return { valid: true, message: '' };
+            }
+
+            // 普通 PNG 校验：必须以 .png 结尾，但不能以 .9.png 结尾
+            if (expectedFormat === '.png') {
+                if (!fileName.endsWith('.png')) {
+                    return { valid: false, message: '文件名必须以 .png 结尾' };
+                }
+                // 如果以 .9.png 结尾，但期望是普通 .png，则不允许
+                if (fileName.endsWith('.9.png')) {
+                    return { valid: false, message: '文件名不能以 .9.png 结尾，请上传普通 PNG 图片' };
+                }
+                return { valid: true, message: '' };
+            }
+
+            // SVG 校验：必须以 .svg 结尾
+            if (expectedFormat === '.svg') {
+                if (!fileName.endsWith('.svg')) {
+                    return { valid: false, message: '文件名必须以 .svg 结尾' };
+                }
+                return { valid: true, message: '' };
+            }
+
+            // 其他格式（如 .mp4, .ini 等）跳过校验
+            return { valid: true, message: '' };
+        }
+
+        // --- 获取图片尺寸 ---
         function getImageDimensions(file) {
             return new Promise((resolve) => {
                 if (file.type === 'image/svg+xml' || file.name.endsWith('.svg')) {
@@ -1458,6 +1484,7 @@
             });
         }
 
+        // --- 复制文件名 ---
         async function copyFileName(fileName) {
             try {
                 await navigator.clipboard.writeText(fileName);
@@ -1530,7 +1557,7 @@
             return locations.some(loc => loc.includes('night'));
         }
 
-        // 创建上传区域
+        // 创建上传区域（含校验）
         function createUploadArea(r, type, labelText, fileField, uploadedField, dimsField, card) {
             const ua = document.createElement('div');
             ua.className = 'upload-area';
@@ -1602,6 +1629,15 @@
             });
 
             const handleFile = async (file) => {
+                // --- 执行文件类型校验（基于文件名后缀） ---
+                const validation = await validateFileType(file, r.format);
+                if (!validation.valid) {
+                    showToast(`❌ ${r.fileName} (${labelText}) 校验失败: ${validation.message}`, 'error');
+                    fileInput.value = '';
+                    return;
+                }
+
+                // 校验通过，继续上传
                 r[uploadedField] = true;
                 r[fileField] = file;
                 status.textContent = '✅ 已上传';
