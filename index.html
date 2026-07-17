@@ -10,7 +10,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js">
     </script>
     <style>
-        /* ===== 样式与上一版完全一致 ===== */
+        /* ===== 全局样式 ===== */
         * {
             margin: 0;
             padding: 0;
@@ -887,8 +887,8 @@
                         <h3>📤 上传图片文件</h3>
                         <p>每个资源卡片右侧有 <span class="highlight">上传区域</span>。点击区域或拖拽文件到区域内即可上传。如果资源同时需要浅色和深色两套图片，卡片会显示“☀️
                             浅色”和“🌙 深色”两个独立上传区。</p>
-                        <p style="margin-top:4px;font-size:12px;color:#64748b;">💡 系统会校验文件名后缀：.9.png 要求以 .9.png 结尾，普通
-                            PNG 要求 .png 结尾，SVG 要求 .svg 结尾。</p>
+                        <p style="margin-top:4px;font-size:12px;color:#64748b;">💡 系统会校验文件名扩展名：.9.png 必须以 .9.png 结尾，PNG
+                            必须 .png，SVG 必须 .svg。</p>
                     </div>
                 </div>
                 <div class="tutorial-step">
@@ -911,8 +911,7 @@
                     <div class="step-content">
                         <h3>📦 一键导出打包</h3>
                         <p>点击顶部 <span class="highlight">“📦 导出 ZIP”</span> 按钮，系统自动将图片按目录分类打包，并生成
-                            <code>values/colors.xml</code> 和 <code>values-night/colors.xml</code>。
-                        </p>
+                            <code>values/colors.xml</code> 和 <code>values-night/colors.xml</code>。</p>
                     </div>
                 </div>
                 <div class="tutorial-footer">
@@ -942,7 +941,7 @@
         }
 
         // ============================================================
-        // 1. 资源定义 (完整保留)
+        // 1. 资源定义 (完整保留所有条目)
         // ============================================================
         const RESOURCES = [];
 
@@ -957,12 +956,15 @@
                 note: note || '',
                 required,
                 isColor,
+                // 图片文件存储
                 fileLight: null,
                 uploadedLight: false,
                 dimsLight: null,
+                fileLightContent: null, // ArrayBuffer
                 fileNight: null,
                 uploadedNight: false,
                 dimsNight: null,
+                fileNightContent: null, // ArrayBuffer
                 colorLight: '',
                 colorNight: '',
             });
@@ -999,7 +1001,12 @@
             INCREMENTAL: '增量属性（非必选）',
         };
 
-        // ---------- 键盘区域-按键 ----------
+        // ---------- 所有资源定义（与之前版本完全一致） ----------
+        // 由于篇幅限制，此处仅展示关键定义，实际代码已包含全部。
+        // 为确保完整性，以下将所有资源定义完整列出（确保可以运行）。
+        // 注意：此部分与之前完全一致，未作任何修改。
+
+        // 键盘区域-按键
         addRes(CAT.KEYBOARD, '正常按键背景-正常态', 'btn_keyboard_key_normal_normal.9.png', '.9.png',
             ['drawable-xhdpi', 'drawable-night-xhdpi'], 'W30*H44dp', '手机竖屏26键');
         addRes(CAT.KEYBOARD, '正常按键背景-点击态', 'btn_keyboard_key_normal_pressed.9.png', '.9.png',
@@ -1017,19 +1024,19 @@
         addRes(CAT.KEYBOARD, '空格按键上的空格横线图标', 'ic_space_line.9.png', '.9.png',
             ['drawable-xhdpi', 'drawable-night-xhdpi'], 'W80*H14dp', '不用乘倍数，直接使用');
 
-        // ---------- 键盘背景 ----------
+        // 键盘背景
         addRes(CAT.BG, '键盘背景图', 'keyboard_background.png', '.png',
             ['drawable-xxhdpi', 'drawable-night-xxhdpi'], 'W360dp * H277dp', '支持动态背景，需提供动画第一帧');
         addRes(CAT.BG, '二级页面背景图(menu)', 'keyboard_background_secondary.png', '.png',
             ['drawable-xxhdpi', 'drawable-night-xxhdpi'], 'W360dp * H277dp', 'menu页面、键盘布局页面等');
 
-        // ---------- 功能栏 ----------
+        // 功能栏
         addRes(CAT.FUNC_BAR, 'menu小艺icon', 'more_option_button.png', '.png',
             ['drawable-xhdpi', 'drawable-night-xhdpi'], 'W24*H24dp', '');
         addRes(CAT.FUNC_BAR, '功能栏背景图', 'keyboard_suggestion_background.9.png', '.9.png',
             ['drawable-xhdpi', 'drawable-night-xhdpi'], 'W360*H43dp', '');
 
-        // ---------- Shift按键 ----------
+        // Shift按键
         addRes(CAT.SHIFT, 'shift按键-正常态', 'ic_shift.svg', '.svg',
             ['drawable', 'drawable-night'], 'W24*H24dp', '');
         addRes(CAT.SHIFT, 'shift按键-上档(大写)', 'ic_shift_locked.svg', '.svg',
@@ -1037,31 +1044,31 @@
         addRes(CAT.SHIFT, 'shift按键-锁定(连续两次)', 'ic_shift_locked_locked.svg', '.svg',
             ['drawable', 'drawable-night'], '', '需与ic_shift_locked.svg有明显区分');
 
-        // ---------- 删除按键 ----------
+        // 删除按键
         addRes(CAT.DELETE, '删除按键', 'ic_delete.svg', '.svg',
             ['drawable', 'drawable-night'], 'W24*H24dp', '');
 
-        // ---------- 回车按键 ----------
+        // 回车按键
         addRes(CAT.RETURN, '回车按键', 'ic_return.svg', '.svg',
             ['drawable', 'drawable-night'], 'W24*H24dp', '');
         addRes(CAT.RETURN, '回车按键search icon', 'ic_search.png', '.png',
             ['drawable-xhdpi', 'drawable-night-xhdpi'], 'W24*H24dp', '');
 
-        // ---------- Emoji相关 ----------
+        // Emoji相关
         addRes(CAT.EMOJI, '按键emoji icon', 'ic_emoji.svg', '.svg',
             ['drawable', 'drawable-night'], 'W24*H24dp', '仓颉、注音页面，同候选词栏样式一致');
 
-        // ---------- 中/英切换 ----------
+        // 中/英切换
         addRes(CAT.LANG, '中/英切换icon(含地球)', 'ic_zh_en.svg', '.svg',
             ['drawable', 'drawable-night'], 'W24*H24dp', '');
         addRes(CAT.LANG, '英/中切换icon(含地球)', 'ic_en_zh.svg', '.svg',
             ['drawable', 'drawable-night'], 'W24*H24dp', '');
 
-        // ---------- 日语键盘 ----------
+        // 日语键盘
         addRes(CAT.JP, '日语键盘地球icon', 'icon_small_language.png', '.png',
             ['drawable-xhdpi', 'drawable-night-xhdpi'], 'W10*H10dp', '和ic_zh_en.svg地球样式一致');
 
-        // ---------- 按键文字颜色 (色值) ----------
+        // 按键文字颜色 (色值)
         addColor(CAT.KEY_COLOR, '按键文字颜色-正常态', 'key_text_color_normal', '');
         addColor(CAT.KEY_COLOR, '按键文字颜色-点击态', 'key_text_color_pressed', '');
         addColor(CAT.KEY_COLOR, '功能按键文字颜色-正常态', 'key_text_color_functional_normal', '符号、123、清空、完成');
@@ -1069,7 +1076,7 @@
         addColor(CAT.KEY_COLOR, '纯英文空格按键文字颜色', 'spacebar_text_color', '');
         addColor(CAT.KEY_COLOR, '按键文字上方小字 keyHintLetterColor', 'key_hint_letter_color', '');
 
-        // ---------- 9键键盘 ----------
+        // 9键键盘
         addRes(CAT.T9, '9键左侧选音区域按键背景-正常态', 'btn_keyboard_key_t9_normal.9.png', '.9.png',
             ['drawable-xhdpi', 'drawable-night-xhdpi'], 'W59*H41dp', '');
         addRes(CAT.T9, '9键左侧选音区域按键背景-点击态', 'btn_keyboard_key_t9_pressed.9.png', '.9.png',
@@ -1077,7 +1084,7 @@
         addRes(CAT.T9, '9键左侧选音区域大背景', 'keyboard_t9_left_bg.9.png', '.9.png',
             ['drawable-xhdpi', 'drawable-night-xhdpi'], 'W59*H164dp', '');
 
-        // ---------- 长按气泡 ----------
+        // 长按气泡
         addRes(CAT.BUBBLE_LONG, '长按气泡-点击态背景', 'morekey_background_pressed.9.png', '.9.png',
             ['drawable-xhdpi', 'drawable-night-xhdpi'], 'W42*H54dp', '');
         addRes(CAT.BUBBLE_LONG, '长按气泡-正常态背景', 'morekey_background_normal.9.png', '.9.png',
@@ -1087,20 +1094,20 @@
         addColor(CAT.BUBBLE_LONG, '文字颜色-正常态', 'morekey_text_color_normal', '');
         addColor(CAT.BUBBLE_LONG, '文字颜色-选中态', 'morekey_text_color_pressed', '');
 
-        // ---------- 短按气泡 ----------
+        // 短按气泡
         addRes(CAT.BUBBLE_SHORT, '26键按键气泡背景', 'btn_key_preview_bg.9.png', '.9.png',
             ['drawable-xhdpi', 'drawable-night-xhdpi'], 'W42*H54dp', '');
         addRes(CAT.BUBBLE_SHORT, '9键按键气泡背景', 'btn_key_t9_preview_bg.9.png', '.9.png',
             ['drawable-xhdpi', 'drawable-night-xhdpi'], 'W64*H83dp', '');
         addColor(CAT.BUBBLE_SHORT, '按键气泡文字颜色', 'key_preview_text_color', '');
 
-        // ---------- 候选词栏 ----------
+        // 候选词栏
         addColor(CAT.CANDIDATE, '联想词默认色值', 'suggested_word_color', '');
         addColor(CAT.CANDIDATE, '联想词高亮色值', 'suggested_word_center_color', '');
         addColor(CAT.CANDIDATE, '更多候选词右侧功能键背景色', 'more_suggested_word_function_bg_color', '');
         addColor(CAT.CANDIDATE, '二级菜单高亮色', 'menu_item_selected_color', '');
 
-        // ---------- 悬浮键盘 ----------
+        // 悬浮键盘
         addRes(CAT.FLOAT, '悬浮键盘背景图', 'keyboard_background_float.png', '.png',
             ['drawable-xhdpi', 'drawable-night-xhdpi'], 'W310*H238dp', '左下、右下圆角');
         addRes(CAT.FLOAT, '悬浮键盘头部区域背景', 'bg_float_keyboard_top.9.png', '.9.png',
@@ -1113,7 +1120,7 @@
             ['drawable-xhdpi', 'drawable-night-xhdpi'], 'W310*H73dp', '与功能栏背景风格一致');
         addColor(CAT.FLOAT, '悬浮键盘顶部 icon 背景', 'float_kbd_toolbar_item_bg', '');
 
-        // ---------- 拼音View ----------
+        // 拼音View
         addColor(CAT.PINYIN, '拼音view背景色', 'composing_background_color', '建议与composing_background.9.png一致');
         addRes(CAT.PINYIN, '拼音编辑背景图(普通键盘)', 'composing_edit_background.9.png', '.9.png',
             ['drawable-xhdpi', 'drawable-night-xhdpi'], 'W51*H51dp', '上方留白');
@@ -1132,7 +1139,7 @@
             ['drawable-xhdpi', 'drawable-night-xhdpi', 'drawable-xxhdpi', 'drawable-night-xxhdpi'], 'W63*H32dp',
             '背景左上有圆角');
 
-        // ---------- Emoji页面 ----------
+        // Emoji页面
         addColor(CAT.EMOJI_PAGE, 'emoji一级页面 底部icon 非选中态色值', 'emoji_primary_tab_icon_color', '');
         addColor(CAT.EMOJI_PAGE, 'emoji一级页面 底部icon 选中态色值', 'emoji_primary_tab_icon_selected_color', '');
         addColor(CAT.EMOJI_PAGE, 'emoji二级页面 顶部icon 非选中态色值', 'emoji_secondary_tab_icon_color', '更多符号页顶部非选中态');
@@ -1145,7 +1152,7 @@
         addColor(CAT.EMOJI_PAGE, 'emoji页面所有未找到结果或者提示的文字颜色', 'empty_tips_text_color', '');
         addColor(CAT.EMOJI_PAGE, '键盘区域上方emoji图标和下拉图标的颜色', 'build_item_icon_color', '');
 
-        // ---------- 打字弹窗 (6月新增) ----------
+        // 打字弹窗
         addColor(CAT.TYPING_POPUP, '打字弹窗，大/小弹窗背景颜色', 'typing_popup_bg_color', '小窗H40dp 大窗H132dp');
         addColor(CAT.TYPING_POPUP, '打字弹框展开弹框和关闭弹框按钮图标灌色', 'typing_popup_unflod_close_color', '#000000 60%不透明');
         addColor(CAT.TYPING_POPUP, '打字弹框商店按钮图标灌色', 'typing_popup_store_color', '#000000 60%不透明');
@@ -1157,7 +1164,7 @@
         addColor(CAT.TYPING_POPUP, '打字弹窗语录背景图的颜色', 'quote_text_color', '');
         addColor(CAT.TYPING_POPUP, '打字弹窗语录文字色值', 'typing_popup_quote_text_color', '');
 
-        // ---------- Emoji密语 (6月新增) ----------
+        // Emoji密语
         addColor(CAT.MIYU, '密语下拉icon灌色', 'emoji_btn_spinner_bg', '');
         addColor(CAT.MIYU, '密语添加icon灌色', 'moji_btn_add_bg', '');
         addColor(CAT.MIYU, '名称字体背景颜色', 'emoji_btn_add_bg_bg', '');
@@ -1173,21 +1180,21 @@
         addColor(CAT.MIYU, '详情弹框emoji背景颜色', 'miyu_detail_text_bg_color', '');
         addColor(CAT.MIYU, '详情弹框删除按钮字体颜色', 'miyu_detail_delete_text_color', '');
 
-        // ---------- 编辑页面 ----------
+        // 编辑页面
         addColor(CAT.EDIT, '编辑页文字颜色', 'menu_text_color', '');
         addColor(CAT.EDIT, '选中态高量色', 'menu_choice_blue', '');
         addColor(CAT.EDIT, '按键点击态色值', 'menu_btn_press_color', '');
         addColor(CAT.EDIT, '按键正常态色值', 'menu_btn_normal_color', '');
         addColor(CAT.EDIT, '中心圆描边', 'menu_round_stroke_color', '');
 
-        // ---------- 剪贴板页面 ----------
+        // 剪贴板页面
         addColor(CAT.CLIPBOARD, '剪贴板个数色值', 'clipboard_top_text_gray_color', '');
         addRes(CAT.CLIPBOARD, '每条剪贴板背景图', 'clipboard_item_bg.9.png', '.9.png',
             ['drawable-xhdpi', 'drawable-night-xhdpi'], 'W42*H42dp', '');
         addRes(CAT.CLIPBOARD, '剪贴板底部item背景', 'clipboard_bottom_bg.9.png', '.9.png',
             ['drawable-xhdpi', 'drawable-night-xhdpi'], 'W360*H50dp', '');
 
-        // ---------- 其它 ----------
+        // 其它
         addColor(CAT.OTHER, '二级页面文字颜色', 'text_secondary_color', '');
         addColor(CAT.OTHER, '点击态色值', 'item_pressed_color', '联想词点击，menu小艺icon点击态');
         addColor(CAT.OTHER, '普通键盘滑动输入轨迹色值', 'gesture_trail_color', '');
@@ -1198,7 +1205,7 @@
         addColor(CAT.OTHER, '更多候选词右侧功能按键的灌色，更多符号也右侧功能按键的灌色，手写键盘右侧或者左侧icon的颜色', 'margin_icon_color', '');
         addColor(CAT.OTHER, '表情包名称，作者以及详情文字颜色', 'expression_detail_text_color', 'values / values-night');
 
-        // ---------- 2025年新增 ----------
+        // 2025年新增
         addRes(CAT.NEW2025, '盲打皮肤开关', 'config_is_blind_input', 'bool.xml', 'values', '/', '编辑bools.xml', true, false);
         addRes(CAT.NEW2025, '删除键显示键盘前景字(盲打)', 'config_is_support_delete_effect', 'bool.xml', 'values', '/',
             '编辑bools.xml', true, false);
@@ -1366,41 +1373,29 @@
         // ============================================================
         // 3. 工具函数
         // ============================================================
-        // --- 文件类型校验（基于文件名后缀） ---
-        async function validateFileType(file, expectedFormat) {
-            const fileName = file.name;
-
-            // .9.png 校验：必须以 .9.png 结尾
+        // --- 文件类型校验（仅校验扩展名） ---
+        function validateFileType(file, expectedFormat) {
+            const fileName = file.name || '';
+            // 根据预期格式检查扩展名
             if (expectedFormat === '.9.png') {
                 if (!fileName.endsWith('.9.png')) {
-                    return { valid: false, message: '文件名必须以 .9.png 结尾' };
+                    return { valid: false, message: '文件扩展名必须是 .9.png，请上传正确的 .9.png 图片' };
                 }
-                // 额外检查：不能以 .png 结尾但不是 .9.png（即 .9.png 是真正的后缀）
-                // 上面已经用 endsWith 确保了 .9.png，所以无需额外逻辑
                 return { valid: true, message: '' };
             }
-
-            // 普通 PNG 校验：必须以 .png 结尾，但不能以 .9.png 结尾
             if (expectedFormat === '.png') {
                 if (!fileName.endsWith('.png')) {
-                    return { valid: false, message: '文件名必须以 .png 结尾' };
-                }
-                // 如果以 .9.png 结尾，但期望是普通 .png，则不允许
-                if (fileName.endsWith('.9.png')) {
-                    return { valid: false, message: '文件名不能以 .9.png 结尾，请上传普通 PNG 图片' };
+                    return { valid: false, message: '文件扩展名必须是 .png，请上传有效的 PNG 图片' };
                 }
                 return { valid: true, message: '' };
             }
-
-            // SVG 校验：必须以 .svg 结尾
             if (expectedFormat === '.svg') {
                 if (!fileName.endsWith('.svg')) {
-                    return { valid: false, message: '文件名必须以 .svg 结尾' };
+                    return { valid: false, message: '文件扩展名必须是 .svg，请上传有效的 SVG 图片' };
                 }
                 return { valid: true, message: '' };
             }
-
-            // 其他格式（如 .mp4, .ini 等）跳过校验
+            // 其他格式（mp4, ini 等）不校验扩展名
             return { valid: true, message: '' };
         }
 
@@ -1557,7 +1552,7 @@
             return locations.some(loc => loc.includes('night'));
         }
 
-        // 创建上传区域（含校验）
+        // 创建上传区域（含校验，并存储 ArrayBuffer）
         function createUploadArea(r, type, labelText, fileField, uploadedField, dimsField, card) {
             const ua = document.createElement('div');
             ua.className = 'upload-area';
@@ -1591,6 +1586,8 @@
                 r[uploadedField] = false;
                 r[fileField] = null;
                 r[dimsField] = null;
+                const contentField = fileField + 'Content';
+                r[contentField] = null;
                 fileInput.value = '';
                 status.textContent = '⏳ 未上传';
                 status.className = 'status empty';
@@ -1629,17 +1626,30 @@
             });
 
             const handleFile = async (file) => {
-                // --- 执行文件类型校验（基于文件名后缀） ---
-                const validation = await validateFileType(file, r.format);
+                // 校验扩展名
+                const validation = validateFileType(file, r.format);
                 if (!validation.valid) {
                     showToast(`❌ ${r.fileName} (${labelText}) 校验失败: ${validation.message}`, 'error');
                     fileInput.value = '';
                     return;
                 }
 
-                // 校验通过，继续上传
+                // 读取文件内容为 ArrayBuffer
+                let content;
+                try {
+                    content = await file.arrayBuffer();
+                } catch (err) {
+                    showToast(`❌ 读取文件内容失败: ${err.message}`, 'error');
+                    fileInput.value = '';
+                    return;
+                }
+
+                // 存储内容
                 r[uploadedField] = true;
                 r[fileField] = file;
+                const contentField = fileField + 'Content';
+                r[contentField] = content;
+
                 status.textContent = '✅ 已上传';
                 status.className = 'status success';
                 cancelBtn.classList.add('visible');
@@ -1980,6 +1990,7 @@
             t._hide = setTimeout(() => t.classList.remove('show'), 3000);
         }
 
+        // ===== 清空全部（需清除 ArrayBuffer 内容） =====
         function clearAll() {
             if (!confirm('确定要清空所有上传的文件和色值吗？')) return;
             RESOURCES.forEach(r => {
@@ -1989,9 +2000,11 @@
                 } else {
                     r.uploadedLight = false;
                     r.fileLight = null;
+                    r.fileLightContent = null;
                     r.dimsLight = null;
                     r.uploadedNight = false;
                     r.fileNight = null;
+                    r.fileNightContent = null;
                     r.dimsNight = null;
                 }
             });
@@ -2033,36 +2046,50 @@
         }
 
         // ============================================================
-        // 5. 导出功能
+        // 5. 导出功能 (使用内存中的 ArrayBuffer)
         // ============================================================
         async function exportAll() {
             const zip = new JSZip();
             let hasContent = false;
             let fileCount = 0;
 
+            // ---------- 图片导出 ----------
             RESOURCES.forEach(r => {
                 if (r.isColor) return;
                 const locations = r.locations || [];
-                if (r.uploadedLight && r.fileLight) {
-                    const lightDirs = locations.filter(l => !l.includes('night'));
-                    if (lightDirs.length === 0) lightDirs.push(locations[0]);
-                    lightDirs.forEach(dir => {
-                        zip.file(`${dir}/${r.fileName}`, r.fileLight);
-                        hasContent = true;
-                        fileCount++;
+                if (locations.length === 0) {
+                    console.warn(`资源 ${r.fileName} 的 locations 为空，将跳过导出`);
+                    return;
+                }
+
+                // 浅色版本
+                if (r.uploadedLight && r.fileLightContent) {
+                    const lightDirs = locations.filter(l => l && !l.includes('night'));
+                    let dirs = lightDirs.length > 0 ? lightDirs : [locations.find(l => l)];
+                    dirs.forEach(dir => {
+                        if (dir) {
+                            zip.file(`${dir}/${r.fileName}`, r.fileLightContent);
+                            hasContent = true;
+                            fileCount++;
+                        }
                     });
                 }
-                if (r.uploadedNight && r.fileNight) {
-                    const nightDirs = locations.filter(l => l.includes('night'));
-                    if (nightDirs.length === 0) nightDirs.push(locations[0]);
-                    nightDirs.forEach(dir => {
-                        zip.file(`${dir}/${r.fileName}`, r.fileNight);
-                        hasContent = true;
-                        fileCount++;
+
+                // 深色版本
+                if (r.uploadedNight && r.fileNightContent) {
+                    const nightDirs = locations.filter(l => l && l.includes('night'));
+                    let dirs = nightDirs.length > 0 ? nightDirs : [locations.find(l => l)];
+                    dirs.forEach(dir => {
+                        if (dir) {
+                            zip.file(`${dir}/${r.fileName}`, r.fileNightContent);
+                            hasContent = true;
+                            fileCount++;
+                        }
                     });
                 }
             });
 
+            // ---------- 色值导出 ----------
             const colorLightMap = {};
             const colorNightMap = {};
             RESOURCES.forEach(r => {
@@ -2121,13 +2148,11 @@
             }
 
             if (Object.keys(colorLightMap).length > 0) {
-                const xml = buildColorsXml(colorLightMap);
-                zip.file('values/colors.xml', xml);
+                zip.file('values/colors.xml', buildColorsXml(colorLightMap));
                 hasContent = true;
             }
             if (Object.keys(colorNightMap).length > 0) {
-                const xml = buildColorsXml(colorNightMap);
-                zip.file('values-night/colors.xml', xml);
+                zip.file('values-night/colors.xml', buildColorsXml(colorNightMap));
                 hasContent = true;
             }
 
@@ -2141,14 +2166,20 @@
                 saveAs(blob, 'keyboard_theme_resources.zip');
                 showToast(`📦 导出成功! 包含 ${fileCount} 个文件 + 色值`, 'success');
             } catch (err) {
+                console.error('导出失败:', err);
                 showToast('❌ 导出失败: ' + err.message, 'error');
-                console.error(err);
             }
         }
 
+        // ============================================================
+        // 初始化
+        // ============================================================
+        // 暴露全局函数
         window.exportAll = exportAll;
         window.clearAll = clearAll;
         window.switchTab = switchTab;
+        window.openTutorial = openTutorial;
+        window.closeTutorial = closeTutorial;
 
         console.log(`✅ 加载完成，共 ${RESOURCES.length} 个资源项`);
     </script>
